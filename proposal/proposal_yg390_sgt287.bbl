@@ -1,0 +1,29 @@
+\begin{thebibliography}{1}
+
+\bibitem{DBLP:journals/corr/abs-1901-03707}
+Willett et~al.
+\newblock Neumann networks for inverse problems in imaging.
+\newblock {\em CoRR}, abs/1901.03707, 2019.
+
+\bibitem{DBLP:journals/corr/abs-1811-08839}
+Jure Zbontar et~al.
+\newblock fastmri: An open dataset and benchmarks for accelerated {MRI}.
+\newblock {\em CoRR}, abs/1811.08839, 2018.
+
+\bibitem{DBLP:journals/corr/KamilovM15}
+Ulugbek~S. Kamilov and Hassan Mansour.
+\newblock Learning optimal nonlinearities for iterative thresholding
+  algorithms.
+\newblock {\em CoRR}, abs/1512.04754, 2015.
+
+\bibitem{DBLP:journals/corr/RomanoEM16}
+Yaniv Romano, Michael Elad, and Peyman Milanfar.
+\newblock The little engine that could: Regularization by denoising {(RED)}.
+\newblock {\em CoRR}, abs/1611.02862, 2016.
+
+\bibitem{DBLP:journals/corr/abs-1712-02862}
+Hemant~Kumar Aggarwal, Merry~P. Mani, and Mathews Jacob.
+\newblock Modl: Model based deep learning architecture for inverse problems.
+\newblock {\em CoRR}, abs/1712.02862, 2017.
+
+\end{thebibliography}

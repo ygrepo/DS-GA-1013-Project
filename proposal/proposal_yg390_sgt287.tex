@@ -1,0 +1,120 @@
+\documentclass[12pt,twoside]{article}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{tikz,graphicx,amsmath,amsfonts,amscd,amssymb,bm,cite,epsfig,epsf,url}
+\usepackage[hang,flushmargin]{footmisc}
+\usepackage[colorlinks=true,urlcolor=blue,citecolor=blue]{hyperref}
+\usepackage{amsthm,multirow,wasysym,appendix}
+\usepackage{array,subcaption} 
+\usepackage{bbm}
+\usepackage{pgfplots}
+\usetikzlibrary{spy}
+\usepgfplotslibrary{external}
+\usepgfplotslibrary{fillbetween}
+\usetikzlibrary{arrows,automata}
+\usepackage{thmtools}
+\usepackage{blkarray} 
+\usepackage{textcomp}
+\usepackage[left=0.8in,right=1.0in,top=1.0in,bottom=1.0in]{geometry}
+
+\usepackage{times}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{latexsym}
+\usepackage{color}
+\usepackage{graphics}
+\usepackage{enumerate}
+\usepackage{amstext}
+\usepackage{blkarray}
+\usepackage{url}
+\usepackage{epsfig}
+\usepackage{bm}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=blue,
+}
+\usepackage{textcomp}
+\usepackage[left=0.8in,right=1.0in,top=1.0in,bottom=1.0in]{geometry}
+\usepackage{mathtools}
+\usepackage{minted}
+\usepackage{bm}
+\usepackage{cite}  
+
+\input{macros}
+
+\title{Learning to regularize, Experiments Using Neumann Networks on fastRMI datasets}
+\author{Soham Girish Tamba, Yves Greatti}
+\date{}
+
+\bibliographystyle{unsrt}
+
+\begin{document}
+\maketitle
+\textbf{Due on March $1^{\text{st}}$}
+
+\noindent\rule{\textwidth}{0.4pt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 3. Project proposal
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Purpose}
+To use Neumann networks  and set up experiments on the fastRMI open datasets, 
+to establish baselines in term of NMSE (normalized mean square error), PSNR (peak signal-to-noise ratio), SSIM(structural similarity) metrics and reconstruction time 
+which could be a critical factor compared to longer timers reported by more traditional  approach such as TV (total variation regularized least squares).
+To define modified versions of the Neumann network, or investigate alternative methods for inverting nonlinear operators leading to new neural network architectures.
+
+\section*{Introduction}
+Linear inverse problem in imaging can be formulated as: $\textbf{y} = \mathbf{X} \bm{\beta^*} + \epsilon$ (\cite{DBLP:journals/corr/abs-1901-03707}) 
+where the objective in the context of MRI images is to recover the original image
+$\bm{\beta} \in \R^p$ from a set of undersampled k-space measurements  $\textbf{y} \in \R^m$,  which are corrupted by additive gaussian noise $\epsilon \in \R^p$.
+$ \mathbf{X} \in \R^{m \times p}$ represent a linear forward operator modeling the MR physics. In MR imaging, cross-sectional images of a person's anatomy are produced
+from a strong magnetic field and radio-frequency signal created by various coils. A receiver coil detects the patient body electromagnetic response fields. The measurements are points in
+a Fourier-space known as  \emph{k-space}. The overall scanning process can exceed $30$ minutes leading to low throughput of images, potential patient discomfort and artifacts
+from patient motion. To improve the processing time, less k-samples are captured within a given maximum frequency range producing lower resolution images. In order to recover the initial
+image $\bm{\beta^*}$, the original image must be reconstructed, and includes a regularization  function $r(\bm{\beta})$ 
+which permits to reconstruct an estimated image $\hat{\bm{\beta}}$ 
+as close as the original image $\bm{\beta^*}$. The fastRMI dataset (\cite{DBLP:journals/corr/abs-1811-08839}) contains four types of data from various Siemens MR scanners of knees and brain scans. The data identifies two type of tasks:
+ single-coil  and multi-coil reconstruction images. With enough data, a traditional machine learning approach learns directly a mapping $\bm{\hat{\beta}} = \mathcal{F}(\textbf{y})$ without any knowledge of $\mathbf{X}$.
+ A decoupled approach based on a generative model first learns the image space of interest $\bm{\beta_i}$, and then learns a mapping $\bm{\hat{\beta}} = \mathcal{F}(\textbf{y}, \mathbf{X})$.
+ Given a generative model $G$, we can compute $\vect{\hat{\beta}}$ from $\vect{y}$:
+ $$\vect{\hat{\beta}} = \arg \min_{\vect{\beta} = G(\vect{z})} \| \vect{y} - \mat{X} \vect{\beta} \|_2^2 $$
+
+ 
+ Alternatively we might learn a denoising autoencoder that could be used as a proximal operator in an iterative reconstruction method.
+ A standard approach is to use a least-squares estimator (\cite{DBLP:journals/corr/KamilovM15}):
+ $$ \bm{\hat{\beta}} = \arg \min_{\beta} \frac{1}{2} \| \textbf{y} - \mathbf{X} \bm{\beta} \|_2^2 + r(\bm{\beta})$$
+ 
+ The key feature of these approaches is that $ \mathbf{X}$ is never considered and the learning model can be used for other inverse problems with different $\mat{X}$ operators.
+ This comes at the scaling cost of $\mathcal{O}(N^{ \frac{2 \alpha + p} {\alpha} })$ by considering the whole sampling space
+  where $N$ is the number of training samples, $p$ the dimension of $\phi(\bm{\beta})$, the probability distribution of the images, $\alpha$ a smoothness term.
+  Incorporating $\mathbf{X}$ into the learning process reduces the dimension $p$ to $p'$, where $p' \ll p$, which consists of considering only the subset of the image to which the operator $\mathbf{X}$ is applied.
+  Neumann networks directly incorporate the forward operator $\mathbf{X}$ and accomplishes an iterative optimization algorithm referred as unrolled gradient descent:
+  
+  $$ \bm{\beta}^{k+1} =  \bm{\beta}^{k} -\eta [\mat{X}^T (\mat{X} \vect{\beta}^{k} - \vect{y}) + R(\vect{\beta}^{(k)}], \eta > 0$$
+  For a number of fixed iterations, denoted B for Blocks, the algorithm leads to an estimator $\vect{\hat{\beta}}$ of the form (\cite{DBLP:journals/corr/abs-1901-03707}) :
+  $$ \vect{\hat{\beta}}(\vect{y}) = \sum_{j=0}^B ([ \mat(I) -\eta \mat{X}^T \mat{X}](.) -\eta R(.))^j (\eta \mat{X}^T \vect{y})$$
+  
+\section{Our contribution}
+We will set up the experiments to test Newman networks on the fastRMI datasets (\cite{DBLP:journals/corr/abs-1811-08839}) starting with single coil knee pictures then multi-coil knee and brain k-space data.
+Our analysis will report three metric NMSE, PSNR and SSIM baselines for 4-fold and 8-fold acceleration (4\% or 8\% of all k-space lines).
+Neumann network architecture is motivated by the Neumann series expansion of few terms (B blocks) of a linear operator R representing the gradient of a regularizer.
+With this severe restriction, the authors of the Neumann network paper claim that their approach is still justified when the images belong to a single subspace of $\mathcal{S} \subset \R^p$
+providing that there exists a linear estimator that gives exact recovery of images belonging to the subspace. We will explore also this path by randomly choosing three or more dimensional subspaces and
+projecting the training data into these subspaces. Depending on the structure of $\mat{X}$ and how easily $(\mat{X}^T \mat{X} + \lambda \mat{I})$ can be computed, 
+we will also eventually want to use preconditioning to permit fewer Newmann network blocks (B)
+to allow faster training and potentially faster reconstruction time. We will also investigate the effect of sample size (number of training images) and patching (patches of $3 \times 3$ , or $5 \times 5$ neighboring pixels).
+\cite{DBLP:journals/corr/abs-1901-03707} Rebecca Willett et al. have reported favorable results when changing these parameters in favor to NN compared to other models and we will evaluate NN in these settings when applied to the fastMRI datasets.
+In parallel of our main task of evaluating Neumann networks on fastMRI tasks, if time permits, we will use flavors of the Neumann architecture like increasing the number of skip connections or other architecture modifications. 
+Lastly we may explore different polynomial expansions or ODE techniques to improve training of Neumann networks.
+
+\section{Conclusion}
+Our main objective is to evaluate the performance of Newmann Network on fastMRI single and multi-coil images and research various techniques to improve its performance on this dataset.\\
+
+References: (\cite{DBLP:journals/corr/abs-1901-03707} \cite{DBLP:journals/corr/abs-1811-08839} \cite{DBLP:journals/corr/KamilovM15} \cite{DBLP:journals/corr/RomanoEM16} \cite{DBLP:journals/corr/abs-1712-02862})
+
+\bibliography{bibliography} 
+\bibliographystyle{plain}
+
+\end{document}

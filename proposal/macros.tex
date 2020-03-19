@@ -1,0 +1,208 @@
+%% Probability operators and functions
+%
+% \def \P{\mathrm{P}}
+\def \P{\mathrm{P}}
+\def \E{\mathrm{E}}
+\def \Var{\mathrm{Var}}
+\let\var\Var
+\def \Cov {\mathrm{Cov}} \let\cov\Cov
+\def \MSE {\mathrm{MSE}} \let\mse\MSE
+\def \sgn {\mathrm{sgn}}
+\def \R {\mathbb{R}}
+\def \C {\mathbb{C}}
+\def \N {\mathbb{N}}
+\def \Z {\mathbb{Z}}
+\def \cV {\mathcal{V}}
+\def \cS {\mathcal{S}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\green}[1]{\textcolor{ForestGreen}{ #1}}
+\newcommand{\fuchsia}[1]{\textcolor{RoyalPurple}{ #1}}
+
+%
+%% Probability distributions
+%
+%\def \Bern    {\mathrm{Bern}}
+%\def \Binom   {\mathrm{Binom}}
+%\def \Exp     {\mathrm{Exp}}
+%\def \Geom    {\mathrm{Geom}}
+%\def \Norm    {\mathcal{N}}
+%\def \Poisson {\mathrm{Poisson}}
+%\def \Unif    {\mathrm {U}}
+%
+\newcommand{\bdb}[1]{\textcolor{red}{#1}}
+
+\newcommand{\ml}[1]{\mathcal{ #1 } }
+\newcommand{\wh}[1]{\widehat{ #1 } }
+\newcommand{\wt}[1]{\widetilde{ #1 } }
+\newcommand{\conj}[1]{\overline{ #1 } }
+\newcommand{\rnd}[1]{\tilde{ #1 } }
+\newcommand{\rv}[1]{ \rnd{ #1}  }
+\newcommand{\rx}{\rnd{ x}  }
+\newcommand{\ry}{\rnd{ y}  }
+\newcommand{\ra}{\rnd{ a}  }
+\newcommand{\rb}{\rnd{ b}  }
+\newcommand{\rpc}{\widetilde{ pc}  }
+
+\def \cnd {\, | \,}
+\def \Id { I }
+\def \J {\mathbf{1}\mathbf{1}^T}
+
+\newcommand{\op}[1]{\operatorname{#1}}
+\newcommand{\setdef}[2]{ := \keys{ #1 \; | \; #2 } }
+\newcommand{\set}[2]{ \keys{ #1 \; | \; #2 } }
+\newcommand{\sign}[1]{\op{sign}\left( #1 \right) }
+\newcommand{\trace}[1]{\op{tr}\left( #1 \right) }
+\newcommand{\tr}[1]{\op{tr}\left( #1 \right) }
+\newcommand{\inv}[1]{\left( #1 \right)^{-1} }
+\newcommand{\abs}[1]{\left| #1 \right|}
+\newcommand{\sabs}[1]{| #1 |}
+\newcommand{\keys}[1]{\left\{ #1 \right\}}
+\newcommand{\sqbr}[1]{\left[ #1 \right]}
+\newcommand{\sbrac}[1]{ ( #1 ) }
+\newcommand{\brac}[1]{\left( #1 \right) }
+\newcommand{\bbrac}[1]{\big( #1 \big) }
+\newcommand{\Bbrac}[1]{\Big( #1 \Big)}
+\newcommand{\BBbrac}[1]{\BIG( #1 \Big)}
+\newcommand{\MAT}[1]{\begin{bmatrix} #1 \end{bmatrix}}
+\newcommand{\sMAT}[1]{\left(\begin{smallmatrix} #1 \end{smallmatrix}\right)}
+\newcommand{\sMATn}[1]{\begin{smallmatrix} #1 \end{smallmatrix}}
+\newcommand{\PROD}[2]{\left \langle #1, #2\right \rangle}
+\newcommand{\PRODs}[2]{\langle #1, #2 \rangle}
+\newcommand{\der}[2]{\frac{\text{d}#2}{\text{d}#1}}
+\newcommand{\pder}[2]{\frac{\partial#2}{\partial#1}}
+\newcommand{\derTwo}[2]{\frac{\text{d}^2#2}{\text{d}#1^2}}
+\newcommand{\ceil}[1]{\lceil #1 \rceil}
+\newcommand{\Imag}[1]{\op{Im}\brac{ #1 }}
+\newcommand{\Real}[1]{\op{Re}\brac{ #1 }}
+\newcommand{\norm}[1]{\left|\left| #1 \right|\right| }
+\newcommand{\norms}[1]{ \| #1 \|  }
+\newcommand{\normProd}[1]{\left|\left| #1 \right|\right| _{\PROD{\cdot}{\cdot}} }
+\newcommand{\normTwo}[1]{\left|\left| #1 \right|\right| _{2} }
+\newcommand{\normTwos}[1]{ \| #1  \| _{2} }
+\newcommand{\normZero}[1]{\left|\left| #1 \right|\right| _{0} }
+\newcommand{\normTV}[1]{\left|\left| #1 \right|\right|  _{ \op{TV}  } }% _{\op{c} \ell_1} }
+\newcommand{\normOne}[1]{\left|\left| #1 \right|\right| _{1} }
+\newcommand{\normOnes}[1]{\| #1 \| _{1} }
+\newcommand{\normOneTwo}[1]{\left|\left| #1 \right|\right| _{1,2} }
+\newcommand{\normF}[1]{\left|\left| #1 \right|\right| _{\op{F}} }
+\newcommand{\normLTwo}[1]{\left|\left| #1 \right|\right| _{\ml{L}_2} }
+\newcommand{\normNuc}[1]{\left|\left| #1 \right|\right| _{\ast} }
+\newcommand{\normOp}[1]{\left|\left| #1 \right|\right|  }
+\newcommand{\normInf}[1]{\left|\left| #1 \right|\right| _{\infty}  }
+\newcommand{\proj}[1]{\mathcal{P}_{#1} \, }
+\newcommand{\diff}[1]{ \, \text{d}#1 }
+\newcommand{\vc}[1]{\boldsymbol{\vec{#1}}}
+\newcommand{\rc}[1]{\boldsymbol{#1}}
+\newcommand{\vx}{\vec{x}}
+\newcommand{\vy}{\vec{y}}
+\newcommand{\vz}{\vec{z}}
+\newcommand{\vu}{\vec{u}}
+\newcommand{\vv}{\vec{v}}
+\newcommand{\vb}{\vec{\beta}}
+\newcommand{\va}{\vec{\alpha}}
+\newcommand{\vaa}{\vec{a}}
+\newcommand{\vbb}{\vec{b}}
+\newcommand{\vg}{\vec{g}}
+\newcommand{\vw}{\vec{w}}
+\newcommand{\vh}{\vec{h}}
+\newcommand{\vnu}{\vec{\nu}}
+\newcommand{\rvnu}{\vc{\nu}}
+
+\newtheorem{theorem}{Theorem}[section]
+% \declaretheorem[style=plain,qed=$\square$]{theorem}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{algorithm}[theorem]{Algorithm}
+
+% \theoremstyle{definition}
+%\newtheorem{example}[proof]{Example}
+%\declaretheorem[style=definition,qed=$\triangle$,sibling=definition]{example}
+%\declaretheorem[style=definition,qed=$\bigcirc$,sibling=definition]{application}
+
+%
+%% Typographic tweaks and miscellaneous
+%\newcommand{\sfrac}[2]{\mbox{\small$\displaystyle\frac{#1}{#2}$}}
+%\newcommand{\suchthat}{\kern0.1em{:}\kern0.3em}
+%\newcommand{\qqquad}{\kern3em}
+%\newcommand{\cond}{\,|\,}
+%\def\Matlab{\textsc{Matlab}}
+%\newcommand{\displayskip}[1]{\abovedisplayskip #1\belowdisplayskip #1}
+%\newcommand{\term}[1]{\emph{#1}}
+%\renewcommand{\implies}{\;\Rightarrow\;}
+
+% My macros
+
+\def\Kset{\mathbb{K}}
+\def\Nset{\mathbb{N}}
+\def\Qset{\mathbb{Q}}
+\def\Rset{\mathbb{R}}
+\def\Sset{\mathbb{S}}
+\def\Zset{\mathbb{Z}}
+\def\squareforqed{\hbox{\rlap{$\sqcap$}$\sqcup$}}
+\def\qed{\ifmmode\squareforqed\else{\unskip\nobreak\hfil
+\penalty50\hskip1em\null\nobreak\hfil\squareforqed
+\parfillskip=0pt\finalhyphendemerits=0\endgraf}\fi}
+
+%\DeclareMathOperator*{\E}{\rm E}
+%\DeclareMathOperator*{\argmax}{\rm argmax}
+%\DeclareMathOperator*{\argmin}{\rm argmin}
+%\DeclareMathOperator{\sgn}{sign}
+\DeclareMathOperator{\supp}{supp}
+\DeclareMathOperator{\last}{last}
+%\DeclareMathOperator{\sign}{\sgn}
+\DeclareMathOperator{\diag}{diag}
+\providecommand{\abs}[1]{\lvert#1\rvert}
+\providecommand{\norm}[1]{\lVert#1\rVert}
+\def\vcdim{\textnormal{VCdim}}
+\DeclareMathOperator*{\B}{\textbf{B}}
+
+%\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+%\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\newcommand{\cX}{{\mathcal X}}
+\newcommand{\cY}{{\mathcal Y}}
+\newcommand{\cA}{{\mathcal A}}
+\newcommand{\ignore}[1]{}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\be}{\begin{enumerate}}
+\newcommand{\ee}{\end{enumerate}}
+\newcommand{\bd}{\begin{description}}
+\newcommand{\ed}{\end{description}}
+\newcommand{\h}{\widehat}
+\newcommand{\e}{\epsilon}
+\newcommand{\mat}[1]{{\mathbf #1}}
+%\newcommand{\R}{\mat{R}}
+\newcommand{\0}{\mat{0}}
+\newcommand{\M}{\mat{M}}
+
+\newcommand{\D}{\mat{D}}
+\renewcommand{\r}{\mat{r}}
+\newcommand{\x}{\mat{x}}
+\renewcommand{\u}{\mat{u}}
+\renewcommand{\v}{\mat{v}}
+\newcommand{\w}{\mat{w}}
+\renewcommand{\H}{\text{0}}
+\newcommand{\T}{\text{1}}
+%\newcommand{\set}[1]{\{#1\}}
+\newcommand{\xxi}{{\boldsymbol \xi}}
+\newcommand{\ssigma}{{\boldsymbol \sigma}}
+\newcommand{\Alpha}{{\boldsymbol \alpha}}
+\newcommand{\tts}{\tt \small}
+\newcommand{\hint}{\emph{hint}}
+\newcommand{\matr}[1]{\bm{#1}}     % ISO complying version
+\newcommand{\vect}[1]{\bm{#1}} % vectors
+
+%\newcommand{\Var}{\mathrm{Var}}
+%\newcommand{\Cov}{\mathrm{Cov}}
+
+% New commands
+\newcommand{\SP}{\mathbf{S}_{+}^n}
+\newcommand{\Proj}{\mathcal{P}_{\mathcal{S}}}
+\DeclarePairedDelimiterX{\inp}[2]{\langle}{\rangle}{#1, #2}
+
