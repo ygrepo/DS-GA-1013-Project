@@ -1,0 +1,31 @@
+# Remove [I]Python caching
+__pycache__
+.ipynb_checkpoints
+
+# Remove Mac shit
+.DS_Store
+
+# Remove Vim temp files
+*sw*
+
+# Ignore Data files
+*.tar.gz
+*.feat
+*.txt
+*.data
+.idea/
+*.pth
+*-ubyte
+*.pt
+#*.png
+imdb
+data/
+
+# Skip temporary figures
+figures-temp
+
+# Ignore log files
+logs/
+
+# Ignore models
+models/
