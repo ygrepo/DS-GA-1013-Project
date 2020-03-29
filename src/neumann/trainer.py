@@ -4,106 +4,121 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-from src.neumann.data_utils import CIFAR10_CLASSES
-from src.neumann.utils import SAVE_LOAD_TYPE, load_model, save_model, isclose
+from src.neumann.utils import SAVE_LOAD_TYPE
 
 
 class Trainer(nn.Module):
-    def __init__(self, model_name, model, optimizer, criterion, dataloader, run_id, add_run_id, config):
+    def __init__(self, model_name, model, optimizer, criterion,
+                 train_dataloader, test_dataloader, run_id, config):
         super(Trainer, self).__init__()
         self.model_name = model_name
         self.model = model.to(config["device"])
         self.config = config
-        self.data_loader = dataloader
+        self.training_data_loader = train_dataloader
+        self.test_data_loader = test_dataloader
         self.optimizer = optimizer
         self.criterion = criterion
         self.epochs = 0
         self.max_epochs = config["num_of_train_epochs"]
         self.run_id = str(run_id)
-        self.add_run_id = add_run_id
+        self.add_run_id = config["add_run_id"]
 
     def train_epochs(self):
-        max_loss = 1e8
-        start_time = time.time()
-        max_loss_repeat = 4
-        loss_repeat_counter = 1
-        prev_loss = float("-inf")
-        for e in range(self.max_epochs):
+        best_acc = 0  # best test accuracy
+        start_epoch = 0
 
-            epoch_loss = self.train(e)
-
-            if epoch_loss < max_loss:
-                print("Loss decreased!")
-                file_path = Path(".") / ("models/" + self.model_name)
-                if self.config["save_model"] == SAVE_LOAD_TYPE.MODEL:
-                    save_model(file_path, self.model, self.optimizer, self.run_id, self.add_run_id)
-                max_loss = epoch_loss
-
-            print("[TRAINING]  Epoch [%d/%d]   Loss: %.4f" % (self.epochs, self.max_epochs, epoch_loss))
-
-            if isclose(epoch_loss, prev_loss, rel_tol=1e-4):
-                loss_repeat_counter += 1
-                if loss_repeat_counter >= max_loss_repeat:
-                    print("Loss not decreasing for last {} times".format(loss_repeat_counter))
-                    break
+        file_path = Path(".") / ("models/" + self.model_name.value)
+        if self.config["reload_model"] == SAVE_LOAD_TYPE.MODEL:
+            model_path = file_path / "model.pyt"
+            if model_path.exists():
+                if torch.cuda.is_available():
+                    map_location = lambda storage, loc: storage.cuda()
                 else:
-                    loss_repeat_counter += 1
-            prev_loss = epoch_loss
+                    map_location = "cpu"
+                checkpoint = torch.load(model_path, map_location=map_location)
+                self.model = checkpoint["model"]
+                best_acc = checkpoint["acc"]
+                start_epoch = checkpoint["epoch"]
+                print(f"Restored checkpoint(whole model and optimizer state dictionary) from {model_path}.")
 
-            self.epochs += 1
+        start_time = time.time()
+        for epoch in range(start_epoch, start_epoch + self.max_epochs):
+
+            self.train(epoch)
+            acc = self.test(epoch)
+
+            # Save checkpoint.
+            if acc > best_acc:
+                print('Saving..')
+                file_path = Path(".") / ("models/" + self.model_name.value)
+                file_path.mkdir(parents=True, exist_ok=True)
+                state = {
+                    "model": self.model.state_dict(),
+                    'acc': acc,
+                    'epoch': epoch,
+                }
+                model_path = file_path / "model.pyt"
+                torch.save(state, model_path)
+                best_acc = acc
 
         print("Total Training in mins: %5.2f" % ((time.time() - start_time) / 60))
 
     def train(self, epoch):
         self.model.train()
-        epoch_loss = 0
-        for batch_num, data in enumerate(self.data_loader, 0):
-            loss = self.train_batch(data)
-            epoch_loss += loss.item()
-            if batch_num % 2000 == 1999:  # print every 2000 mini-batches
-                print("epoch:{:d}, batch:{:d}, loss:{:8.4f}"
-                      .format(epoch + 1, batch_num + 1, epoch_loss / 2000))
-                epoch_loss = 0.0
+        train_loss = 0
+        total = 0
+        correct = 0
+        for batch_num, data in enumerate(self.training_data_loader):
+            loss, total, correct = self.train_batch(total, correct, data)
+            train_loss += loss.item()
 
-        return epoch_loss
+            if batch_num % 100 == 99:  # print every 2000 mini-batches
+                print("[TRAINING] epoch:{:d}, batch:{:d}, loss:{:8.4f}, acc:{:.3f}, ({:d}/{:d})"
+                      .format(epoch + 1, batch_num + 1, train_loss / (batch_num + 1), 100. * correct / total, correct,
+                              total))
+                train_loss = 0.0
 
-    def train_batch(self, data):
+            # progress_bar(batch_num, len(self.training_data_loader),
+            #              "Training Loss: {:.3f} | Acc: {:.3f}% ({:d}/{:d})"
+            #              .format(train_loss / (batch_num + 1), 100. * correct / total, correct, total))
+
+        return train_loss
+
+    def train_batch(self, total, correct, data):
         # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data
+        inputs, targets = data
+        inputs, targets = inputs.to(self.config["device"]), targets.to(self.config["device"])
 
         self.optimizer.zero_grad()
         outputs = self.model(inputs)
-        loss = self.criterion(outputs, labels)
+        loss = self.criterion(outputs, targets)
         loss.backward()
         self.optimizer.step()
-        return loss
+        _, predicted = outputs.max(1)
+        total += targets.size(0)
+        correct += predicted.eq(targets).sum().item()
+        return loss, total, correct
 
-    def test(self):
-        file_path = Path(".") / ("models/" + self.model_name)
-        if self.config["reload_model"] == SAVE_LOAD_TYPE.MODEL:
-            model, optimizer = load_model(file_path, self.optimizer)
-            self.model = model
-            self.optimizer = optimizer
+    def test(self, epoch):
+        self.model.eval()
+        test_loss = 0
         correct = 0
-        class_correct = list(0. for i in range(10))
-        class_total = list(0. for i in range(10))
         total = 0
         with torch.no_grad():
-            for data in self.data_loader:
-                images, labels = data
-                outputs = self.model(images)
-                _, predicted = torch.max(outputs.data, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-                c = (predicted == labels).squeeze()
-                for i in range(4):
-                    label = labels[i]
-                    class_correct[label] += c[i].item()
-                    class_total[label] += 1
+            for batch_num, (inputs, targets) in enumerate(self.test_data_loader):
+                inputs, targets = inputs.to(self.config["device"]), targets.to(self.config["device"])
+                outputs = self.model(inputs)
+                loss = self.criterion(outputs, targets)
 
-        print("Accuracy of the network on the 10000 test images: %d %%" % (
-                100 * correct / total))
+                test_loss += loss.item()
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
+                if batch_num % 100 == 99:  # print every 2000 mini-batches
+                    print("[TESTING] epoch:{:d}, batch:{:d}, loss:{:8.4f}, acc:{:.3f}, ({:d}/{:d})"
+                          .format(epoch + 1, batch_num + 1, test_loss / (batch_num + 1), 100. * correct / total,
+                                  correct, total))
 
-        for i in range(10):
-            print('Accuracy of %5s : %2d %%' % (
-                CIFAR10_CLASSES[i], 100 * class_correct[i] / class_total[i]))
+                    test_loss = 0.0
+
+        return 100. * correct / total

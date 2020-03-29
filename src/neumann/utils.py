@@ -2,14 +2,22 @@ import cmath
 import random
 from enum import Enum
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
+
 
 class SAVE_LOAD_TYPE(Enum):
     NO_ACTION = "NONE"
     MODEL = "MODEL"
     MODEL_PARAMETERS = "MODEL_PARAMETERS"
+
+
+class MODEL(Enum):
+    net = "net"
+    neumann = "neumann"
+    resnet = "resnet"
+
 
 def save_model(file_path, model, optimizer, run_id, add_run_id=False):
     file_path.mkdir(parents=True, exist_ok=True)
@@ -49,8 +57,9 @@ def set_seed(seed=1234):
     np.random.seed(seed)
     random.seed(seed)
 
+
 def imshow(img):
-    img = img / 2 + 0.5     # unnormalize
+    img = img / 2 + 0.5  # unnormalize
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()

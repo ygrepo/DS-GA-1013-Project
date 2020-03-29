@@ -2,14 +2,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from typing import Dict, Any
+
 class NeumannNetwork(nn.Module):
 
-    def __init__(self, forward_gramian, corruption_model, forward_adjoint, reg_network, iterations):
+    def __init__(self, forward_gramian, corruption_model, forward_adjoint, reg_network, config: Dict[str, Any]):
         self.forward_gramian = forward_gramian
         self.corruption_model = corruption_model
         self.forward_adjoint = forward_adjoint
         self.reg_network = reg_network
-        self.iterations = iterations
+        self.iterations = config["n_block"]
         self.eta = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
 
     def forward(self, true_beta):
