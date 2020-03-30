@@ -19,15 +19,19 @@ blur_kernel = fspecial_gauss(size=5, sigma=sigma)
 blur_kernel_repeat = blur_kernel.reshape((5, 5, 1, 1))
 blur_kernel_repeat = np.repeat(blur_kernel_repeat, color_dimension, axis=2)
 blur_kernel_repeat = np.transpose(blur_kernel_repeat, (2, 3, 0, 1))
-blur_kernel = torch.from_numpy(blur_kernel_repeat).double()
+blur_kernel = torch.from_numpy(blur_kernel_repeat).float()
 
 
-def blur_model(channels=3, weight=blur_kernel):
+def blur_model(input, channels=3, weight=blur_kernel):
     gaussian_filter = nn.Conv2d(in_channels=channels, out_channels=channels,
                                 kernel_size=5, groups=channels, bias=False)
     gaussian_filter.weight.data = weight
     gaussian_filter.weight.requires_grad = False
-    return gaussian_filter
+    transp_img = input.unsqueeze(0)
+    img = gaussian_filter(transp_img)
+    #return torch.clamp(img, min=0, max=1)
+    return img
+
 
 
 def add_noise(img, sigma):

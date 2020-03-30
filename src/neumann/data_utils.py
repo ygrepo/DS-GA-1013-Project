@@ -1,12 +1,15 @@
 from pathlib import Path
 from typing import Dict, Any
 
+import  numpy as np
+
 import torch
 import torchvision
 import torchvision.transforms as transforms
 
 from src.neumann.utils import imshow, MODEL
 from src.neumann.config import get_config
+from src.neumann.operators_blur_cifar import blur_model
 
 CIFAR10_CLASSES = ('plane', 'car', 'bird', 'cat',
                    'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -46,10 +49,15 @@ def main():
     dataiter = iter(trainloader)
     images, labels = dataiter.next()
 
+    oneimage = images[0]
+    blurred_img = blur_model(oneimage)
+    blurred_img = blurred_img.squeeze(0)
+    imshow(blurred_img)
+
     # show images
-    imshow(torchvision.utils.make_grid(images))
+    #imshow(torchvision.utils.make_grid(oneimage))
     # print labels
-    print(' '.join('%5s' % CIFAR10_CLASSES[labels[j]] for j in range(4)))
+    #print(' '.join('%5s' % CIFAR10_CLASSES[labels[j]] for j in range(4)))
 
 
 if __name__ == "__main__":

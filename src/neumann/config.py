@@ -8,7 +8,7 @@ def get_config(model: MODEL):
         "device": ("cuda" if torch.cuda.is_available() else "cpu"),
         "add_run_id": False,
         "save_model": SAVE_LOAD_TYPE.MODEL,
-        "reload_model": SAVE_LOAD_TYPE.NO_ACTION
+        "reload_model": SAVE_LOAD_TYPE.MODEL
     }
 
     if model == MODEL.net:

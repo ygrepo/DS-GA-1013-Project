@@ -1,10 +1,13 @@
 import cmath
 import random
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torch.nn as nn
 
 
 class SAVE_LOAD_TYPE(Enum):
@@ -19,33 +22,38 @@ class MODEL(Enum):
     resnet = "resnet"
 
 
-def save_model(file_path, model, optimizer, run_id, add_run_id=False):
+def save_model(model_name: MODEL, model: nn.Module, optimizer: Any,
+               acc: float, epoch: int, file_path: Path = Path("models")):
+    file_path = file_path / model_name.value
     file_path.mkdir(parents=True, exist_ok=True)
-    if add_run_id:
-        model_path = file_path / ("model_" + run_id + ".pyt")
-    else:
-        model_path = file_path / ("model.pyt")
-
-    torch.save(model, model_path)
-    print("Saving whole model and optimizer state dictionary")
-    torch.save({
-        "model": model,
+    file_path = file_path / "model.pth"
+    state = {
+        "model": model if model_name == MODEL.neumann else model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
-    }, model_path)
+        "acc": acc,
+        "epoch": epoch,
+    }
+    print(f"Saving model:{model_name}")
+    print(file_path)
+    torch.save(state, file_path)
 
 
-def load_model(file_path, optimizer):
-    model_path = file_path / "model.pyt"
-    if model_path.exists():
-        if torch.cuda.is_available():
-            map_location = lambda storage, loc: storage.cuda()
-        else:
-            map_location = "cpu"
-        checkpoint = torch.load(model_path, map_location=map_location)
-        model = checkpoint["model"]
-        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        print(f"Restored checkpoint(whole model and optimizer state dictionary) from {model_path}.")
-        return model, optimizer
+def load_model(model_name: MODEL, model: nn.Module, optimizer: Any, file_path: Path = Path("models")):
+    file_path = file_path / (model_name.value + "/model.pth")
+    if not file_path.exists():
+        raise ValueError("Checkpoint file does not exist")
+
+    if torch.cuda.is_available():
+        map_location = lambda storage, loc: storage.cuda()
+    else:
+        map_location = "cpu"
+    checkpoint = torch.load(file_path, map_location=map_location)
+    model.load_state_dict(checkpoint["model"])
+    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    acc = checkpoint["acc"]
+    start_epoch = checkpoint["epoch"]
+    print(f"Restored checkpoint from {file_path}.")
+    return model, optimizer, acc, start_epoch
 
 
 # Reproducibility
