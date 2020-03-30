@@ -3,7 +3,7 @@ import time
 import torch
 import torch.nn as nn
 
-from src.neumann.utils import SAVE_LOAD_TYPE, MODEL, save_model, load_model
+from src.neumann.utils import SAVE_LOAD_TYPE, MODEL, save_model, load_model, isclose
 
 
 class Trainer(nn.Module):
@@ -25,6 +25,10 @@ class Trainer(nn.Module):
     def train_epochs(self):
         best_acc = 0  # best test accuracy
         start_epoch = 0
+        max_loss = 1e8
+        max_loss_repeat = 4
+        loss_repeat_counter = 1
+        prev_loss = float("-inf")
 
         if self.config["reload_model"] == SAVE_LOAD_TYPE.MODEL:
             _, _, best_acc, start_epoch = load_model(self.model_name, self.model, self.optimizer)
@@ -37,7 +41,17 @@ class Trainer(nn.Module):
 
             # Save checkpoint.
             if self.model_name == MODEL.neumann:
-                pass
+                if test_loss < max_loss:
+                    print("Loss decreased, saving model!")
+                    save_model(self.model_name, self.model, self.optimizer, acc, epoch)
+                    max_loss = test_loss
+                if isclose(test_loss, prev_loss, rel_tol=1e-4):
+                    loss_repeat_counter += 1
+                    if loss_repeat_counter >= max_loss_repeat:
+                        print(f"Test loss not decreasing for last {loss_repeat_counter} times")
+                        break
+                    else:
+                        loss_repeat_counter += 1
 
             if self.model_name != MODEL.neumann and acc > best_acc:
                 best_acc = acc
