@@ -88,6 +88,9 @@ class Trainer(nn.Module):
         loss = self.criterion(outputs, targets)
         loss.backward()
         self.optimizer.step()
+
+
+
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()

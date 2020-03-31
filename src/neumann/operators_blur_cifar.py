@@ -3,51 +3,41 @@ import torch
 from torch import nn
 
 
-def fspecial_gauss(size, sigma):
-    x, y = np.mgrid[-size // 2 + 1:size // 2 + 1, -size // 2 + 1:size // 2 + 1]
-    g = np.exp(-((x ** 2 + y ** 2) / (2.0 * sigma ** 2)))
-    return g / (g.sum())
+class BlurModel:
+    def __init__(self, device, add_noise: bool = False, kernel_size: int = 5, padding: int = 2,
+                 channels: int = 3, filter_sigma: float = 0.001, mean_noise: float = 0.0, sigma_noise: float = 1.0):
+        self.device = device
+        self.add_noise = add_noise
+        filter = nn.Conv2d(in_channels=channels, out_channels=channels,
+                           padding=(padding, padding), kernel_size=(kernel_size, kernel_size), groups=channels, bias=False)
+        blur_kernel = self.special_gauss(size=kernel_size, sigma=filter_sigma)
+        blur_kernel_repeat = blur_kernel.reshape((kernel_size, kernel_size, 1, 1))
+        blur_kernel_repeat = np.repeat(blur_kernel_repeat, channels, axis=2)
+        blur_kernel_repeat = np.transpose(blur_kernel_repeat, (2, 3, 0, 1))
+        blur_kernel = torch.from_numpy(blur_kernel_repeat).float()
+        filter.weight.data = blur_kernel
+        filter.weight.requires_grad = False
+        self.filter = filter
+        self.normal_dist = torch.distributions.Normal(loc=torch.tensor([mean_noise]), scale=torch.tensor([sigma_noise]))
 
+    def special_gauss(self, size, sigma):
+        x, y = np.mgrid[-size // 2 + 1:size // 2 + 1, -size // 2 + 1:size // 2 + 1]
+        g = np.exp(-((x ** 2 + y ** 2) / (2.0 * sigma ** 2)))
+        return g / (g.sum())
 
-batch_size = 32
-dimension1 = 32
-dimension2 = 32
-color_dimension = 3
-sigma = 0.001
+    def __call__(self, input):
+        input = input.to(self.device)
+        with torch.no_grad():
+            output = self.filter(input)
+            if not self.add_noise:
+                return output
+            sample = self.normal_dist.sample((output.view(-1).size())).reshape(output.size()).to(self.device)
+            return output.add(sample)
 
-blur_kernel = fspecial_gauss(size=5, sigma=sigma)
-blur_kernel_repeat = blur_kernel.reshape((5, 5, 1, 1))
-blur_kernel_repeat = np.repeat(blur_kernel_repeat, color_dimension, axis=2)
-blur_kernel_repeat = np.transpose(blur_kernel_repeat, (2, 3, 0, 1))
-blur_kernel = torch.from_numpy(blur_kernel_repeat).float()
+class GramianModel:
 
+    def __init__(self, blur_model: BlurModel):
+        self.blur_model = blur_model
 
-def blur_model(input, channels=3, weight=blur_kernel):
-    gaussian_filter = nn.Conv2d(in_channels=channels, out_channels=channels,
-                                kernel_size=5, groups=channels, bias=False)
-    gaussian_filter.weight.data = weight
-    gaussian_filter.weight.requires_grad = False
-    transp_img = input.unsqueeze(0)
-    img = gaussian_filter(transp_img)
-    #return torch.clamp(img, min=0, max=1)
-    return img
-
-
-
-def add_noise(img, sigma):
-    noisy_img = img + np.random.normal(loc=0.0, scale=sigma, size=img.shape)
-    noisy_img = np.clip(noisy_img, 0.0, 1.0)
-    return noisy_img
-
-
-def blur_noise(input, sigma, channels=3, weight=blur_kernel):
-    filter = blur_model(channels, weight)
-    blured_img = filter(input)
-    return add_noise(blured_img, sigma)
-
-
-def blur_gramian(img, channels=3, weights=blur_kernel):
-    filter = blur_model(channels, weights)
-    gramian_output = filter(img)
-    gramian_output = filter(gramian_output)
-    return gramian_output
+    def __call__(self, input):
+        return self.blur_model(self.blur_model(input))

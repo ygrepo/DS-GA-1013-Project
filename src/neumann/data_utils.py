@@ -1,15 +1,13 @@
 from pathlib import Path
 from typing import Dict, Any
 
-import  numpy as np
-
 import torch
 import torchvision
 import torchvision.transforms as transforms
 
-from src.neumann.utils import imshow, MODEL
 from src.neumann.config import get_config
-from src.neumann.operators_blur_cifar import blur_model
+from src.neumann.operators_blur_cifar import BlurModel, GramianModel
+from src.neumann.utils import imshow, MODEL
 
 CIFAR10_CLASSES = ('plane', 'car', 'bird', 'cat',
                    'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -44,20 +42,24 @@ def main():
     print("loading config")
     config = get_config(MODEL.resnet)
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     trainloader, testloader = load_cifar(Path("data"), config)
     # get some random training images
     dataiter = iter(trainloader)
     images, labels = dataiter.next()
 
-    oneimage = images[0]
-    blurred_img = blur_model(oneimage)
-    blurred_img = blurred_img.squeeze(0)
-    imshow(blurred_img)
+    forward_adjoint = BlurModel(device)
+    imshow(torchvision.utils.make_grid(forward_adjoint(images)))
+    print(" ".join("%5s" % CIFAR10_CLASSES[labels[j]] for j in range(4)))
 
-    # show images
-    #imshow(torchvision.utils.make_grid(oneimage))
-    # print labels
-    #print(' '.join('%5s' % CIFAR10_CLASSES[labels[j]] for j in range(4)))
+    forward_gramian = GramianModel(forward_adjoint)
+    imshow(torchvision.utils.make_grid(forward_gramian(images)))
+    print(" ".join("%5s" % CIFAR10_CLASSES[labels[j]] for j in range(4)))
+
+    corruption_model = BlurModel(device, add_noise=True)
+    imshow(torchvision.utils.make_grid(corruption_model(images)))
+    print(" ".join("%5s" % CIFAR10_CLASSES[labels[j]] for j in range(4)))
 
 
 if __name__ == "__main__":
