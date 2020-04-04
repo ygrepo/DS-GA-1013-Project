@@ -10,11 +10,40 @@ def apply_mask(data, mask):
     return torch.where(mask == 0, torch.Tensor([0]), data)
 
 
+        self.corruption_model = lambda data : # Apply X*data
+        self.forward_adjoint = lambda data : utils.fft2(apply_mask( utils.ifft2(data), mask)) # Apply X^T*data
+
+
+def complex_abs(x):
+    return torch.sqrt(torch.sum(x*x, dim=-1))
+
+def real_to_complex(x):
+    y = torch.unsqueeze(x, -1)
+    return torch.cat([y, torch.zeros(y.shape)], dim=-1)
+
+def corruption_model_helper(data, mask):
+    x = real_to_complex(data)
+    x = utils.fft2(x)
+    x = apply_mask(x, mask)
+    x = utils.ifft2(x)
+    x = complex_abs(x)
+    return x 
+
+def forward_adjoint_helper(data, mask):
+    x = real_to_complex(data)
+    x = utils.ifft2(x)
+    x = apply_mask(x, mask)
+    x = utils.fft2(x)
+    x = complex_abs(x)
+    return x 
+
+
 # Nuemann network for fastMRI
 class NeumannNetwork(nn.Module):
 
     def __init__(self, reg_network, config: Dict[str, Any]):
         super(NeumannNetwork, self).__init__()
+        self.kspace_to_img = None
         self.forward_gramian = None
         self.corruption_model = None
         self.forward_adjoint = None
@@ -46,11 +75,13 @@ class NeumannNetwork(nn.Module):
 
     
     # Mask should be of dim C*H*W
-    def set_forward_gram_adj_corruption(self, mask):
-        self.corruption_model = lambda data : utils.ifft2(apply_mask(data, mask)) # Apply X*data
-        self.forward_adjoint = lambda data : apply_mask(utils.ifft2(data, mask)) # Apply X^T*data
+    # All function's input and output are complex values.
+    def set_transforms(self, mask):
+        self.kspace_to_img = lambda data : utils.ifft2(apply_mask(data, mask))
+        self.corruption_model = lambda data : corruption_model_helper(data, mask) # Apply X*data
+        self.forward_adjoint = lambda data : forward_adjoint(data, mask) # Apply X^T*data
         self.forward_gramian = lambda data : self.forward_adjoint( self.corruption_model(data) ) # Apply X^T*X*data
-        # Note that Fourier matrix & mask matrix is symmetric
+        # Note that matrix from of Fourier & mask is symmetric
 
 class Net(nn.Module):
     def __init__(self):
