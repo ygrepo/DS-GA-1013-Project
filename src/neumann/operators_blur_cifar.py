@@ -1,11 +1,13 @@
 import numpy as np
 import torch
 from torch import nn
+from typing import Dict, Any
 
 
-class BlurModel:
+class BlurModel(nn.Module):
     def __init__(self, device, add_noise: bool = False, kernel_size: int = 5, padding: int = 2,
                  channels: int = 3, filter_sigma: float = 0.001, mean_noise: float = 0.0, sigma_noise: float = 1.0):
+        super(BlurModel, self).__init__()
         self.device = device
         self.add_noise = add_noise
         filter = nn.Conv2d(in_channels=channels, out_channels=channels,
@@ -26,19 +28,22 @@ class BlurModel:
         g = np.exp(-((x ** 2 + y ** 2) / (2.0 * sigma ** 2)))
         return g / (g.sum())
 
-    def __call__(self, input):
+    def forward(self, input):
+    #def __call__(self, input):
         input = input.to(self.device)
-        with torch.no_grad():
-            output = self.filter(input)
-            if not self.add_noise:
-                return output
-            sample = self.normal_dist.sample((output.view(-1).size())).reshape(output.size()).to(self.device)
-            return output.add(sample)
+        #with torch.no_grad():
+        output = self.filter(input)
+        if not self.add_noise:
+            return output
+        sample = self.normal_dist.sample((output.view(-1).size())).reshape(output.size()).to(self.device)
+        return output.add(sample)
 
-class GramianModel:
+class GramianModel(nn.Module):
 
-    def __init__(self, blur_model: BlurModel):
-        self.blur_model = blur_model
+    def __init__(self, config: Dict[str, Any]):
+        super(GramianModel, self).__init__()
+        self.blur_model = BlurModel(config["device"])
 
-    def __call__(self, input):
+    def forward(self, input):
+    #def __call__(self, input):
         return self.blur_model(self.blur_model(input))

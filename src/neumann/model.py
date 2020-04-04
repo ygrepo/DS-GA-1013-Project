@@ -6,13 +6,14 @@ from typing import Dict, Any
 
 class NeumannNetwork(nn.Module):
 
-    def __init__(self, forward_gramian, corruption_model, forward_adjoint, reg_network, config: Dict[str, Any]):
+    def __init__(self, forward_gramian, corruption_model, forward_adjoint, reg_network, config: Dict[str, Any],
+                 preconditioned: bool=False):
         super(NeumannNetwork, self).__init__()
         self.forward_gramian = forward_gramian
         self.corruption_model = corruption_model
         self.forward_adjoint = forward_adjoint
         self.reg_network = reg_network
-        self.iterations = config["n_block"]
+        self.n_blocks = config["n_block"]
         self.eta = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
 
     def forward(self, true_beta):
@@ -22,7 +23,7 @@ class NeumannNetwork(nn.Module):
         neumann_sum = runner
 
         # unrolled gradient iterations
-        for i in range(self.iterations):
+        for i in range(self.n_blocks):
             #print(self.forward_gramian(runner).shape)
             linear_component = runner - self.eta * self.forward_gramian(runner)
             regularizer_output = self.reg_network(runner)
@@ -31,6 +32,14 @@ class NeumannNetwork(nn.Module):
             neumann_sum = neumann_sum + runner
 
         return neumann_sum
+
+    def cg_pseudoinverse(self, input, eta):
+
+        running_input = input
+        for i in range(self.n_iterations):
+            Ap = self.forward_gramian(input) + eta * input
+
+
 
 
 class Net(nn.Module):

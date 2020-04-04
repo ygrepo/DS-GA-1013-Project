@@ -32,15 +32,15 @@ def make_model(config: Dict[str, Any]):
 
     if model_type == MODEL.neumann:
         # reg_model = ResNet(config["device"])
-        #reg_model = REDNet10(num_features=32)
-        reg_model = REDNet30(num_features=32)
+        reg_model = REDNet10(num_features=32)
+        #reg_model = REDNet30(num_features=32)
 
         reg_model = reg_model.to(config["device"])
         if config["device"] == "cuda":
             reg_model = nn.DataParallel(reg_model)
 
         forward_adjoint = BlurModel(config["device"])
-        forward_gramian = GramianModel(forward_adjoint)
+        forward_gramian = GramianModel(config)
         corruption_model = BlurModel(config["device"], add_noise=True)
         model = NeumannNetwork(forward_gramian=forward_gramian, corruption_model=corruption_model,
                                forward_adjoint=forward_adjoint, reg_network=reg_model, config=config)
