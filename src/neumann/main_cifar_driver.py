@@ -7,7 +7,7 @@ import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.optim as optim
 
-from src.neumann.RedNet import REDNet10
+from src.neumann.RedNet import REDNet10, REDNet30
 from src.neumann.config import get_config
 from src.neumann.data_utils import load_cifar
 from src.neumann.model import Net, NeumannNetwork
@@ -31,8 +31,9 @@ def make_model(config: Dict[str, Any]):
         return model, criterion, optimizer
 
     if model_type == MODEL.neumann:
-        reg_model = ResNet(config["device"])
+        # reg_model = ResNet(config["device"])
         #reg_model = REDNet10(num_features=32)
+        reg_model = REDNet30(num_features=32)
 
         reg_model = reg_model.to(config["device"])
         if config["device"] == "cuda":
