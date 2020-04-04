@@ -27,7 +27,7 @@ class TRAINER(Enum):
     inverse_problem = "inverse_problem"
 
 def save_model(model_name: MODEL, model: nn.Module, optimizer: Any,
-               acc: float, epoch: int, file_path: Path = Path("models")):
+               epoch: int, acc: float=0, file_path: Path = Path("models")):
     file_path = file_path / model_name.value
     file_path.mkdir(parents=True, exist_ok=True)
     file_path = file_path / "model.pth"

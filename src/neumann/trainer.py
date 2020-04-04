@@ -41,7 +41,7 @@ class InverseProblemTrainer(Trainer):
         prev_loss = float("-inf")
 
         if self.config["reload_model"] == SAVE_LOAD_TYPE.MODEL:
-            _, _, best_acc, start_epoch = load_model(self.model_name, self.model, self.optimizer)
+            _, _, _, start_epoch = load_model(self.model_name, self.model, self.optimizer)
 
         start_time = time.time()
         for epoch in range(start_epoch, start_epoch + self.max_epochs):
@@ -55,7 +55,7 @@ class InverseProblemTrainer(Trainer):
             # Save checkpoint.
             if test_loss < max_loss:
                 print("Loss decreased, saving model!")
-                save_model(self.model_name, self.model, self.optimizer, acc, epoch)
+                save_model(self.model_name, self.model, self.optimizer, epoch)
                 max_loss = test_loss
             if isclose(test_loss, prev_loss, rel_tol=1e-4):
                 loss_repeat_counter += 1
@@ -142,7 +142,7 @@ class ClassificationTrainer(Trainer):
 
             if acc > best_acc:
                 best_acc = acc
-                save_model(self.model_name, self.model, self.optimizer, acc, epoch)
+                save_model(self.model_name, self.model, self.optimizer, epoch, acc)
 
         print("Total Training in mins: %5.2f" % ((time.time() - start_time) / 60))
 
