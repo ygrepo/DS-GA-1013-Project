@@ -25,7 +25,7 @@ class ResNetBlock(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, n_channels=128, n_res_blocks=2, ip_channels=1):
+    def __init__(self, n_channels=128, n_res_blocks=2, ip_channels=3):
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv2d(ip_channels, n_channels, 1)
 
