@@ -32,7 +32,6 @@ def get_config(model: MODEL):
             "num_of_train_epochs": 100,
             "n_block": 6,  # B in the Neumann networks paper
             "image_dimension": 32,
-            "batch_size": 32,
             "n_samples": 30000,  # Size of training set
             "color_channels": 3,  # Number of spectral channels.
             "learning_rate": 0.1,

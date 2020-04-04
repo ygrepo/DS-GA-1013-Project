@@ -8,6 +8,10 @@ import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.optim as optim
 
+import numpy as np
+
+import imageio
+
 from src.neumann.RedNet import REDNet10, REDNet30
 from src.neumann.config import get_config
 from src.neumann.data_utils import load_cifar,load_test_dataset
@@ -33,7 +37,7 @@ def make_model(config: Dict[str, Any]):
 
     if model_type == MODEL.neumann:
         # reg_model = ResNet(config["device"])
-        reg_model = REDNet10(num_features=32)
+        reg_model = REDNet10(num_features=config["image_dimension"])
         #reg_model = REDNet30(num_features=32)
 
         reg_model = reg_model.to(config["device"])
@@ -46,9 +50,9 @@ def make_model(config: Dict[str, Any]):
         model = NeumannNetwork(forward_gramian=forward_gramian, corruption_model=corruption_model,
                                forward_adjoint=forward_adjoint, reg_network=reg_model, config=config)
         model = model.to(config["device"])
-        if config["device"] == "cuda":
-            model = nn.DataParallel(model)
-            cudnn.benchmark = True
+        # if config["device"] == "cuda":
+        #     model = nn.DataParallel(model)
+        #     cudnn.benchmark = True
 
         optimizer = torch.optim.Adam(model.parameters(), lr=config["learning_rate"])
         criterion = nn.MSELoss()
@@ -61,9 +65,9 @@ def make_model(config: Dict[str, Any]):
         # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet101', pretrained=True)
         # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet152', pretrained=True)
         model = model.to(config["device"])
-        #if config["device"] == 'cuda':
-        #    model = nn.DataParallel(model)
-        #    cudnn.benchmark = True
+        if config["device"] == 'cuda':
+            model = nn.DataParallel(model)
+            cudnn.benchmark = True
 
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(model.parameters(), lr=config["learning_rate"], momentum=0.9)
@@ -94,7 +98,7 @@ def train(config: Dict[str, Any], run_id: str):
 
     trainer.train_epochs()
 
-def test(config: Dict[str, Any], run_id: str, path: Path=Path("data/testing/results")):
+def test(config: Dict[str, Any], run_id: str, path: Path=Path("data/testing/results/")):
     print("Creating model:{}".format(config["model"]))
     model, criterion, optimizer = make_model(config)
     _, _, _, start_epoch = load_model(config["model"], model, optimizer)
@@ -104,7 +108,12 @@ def test(config: Dict[str, Any], run_id: str, path: Path=Path("data/testing/resu
     with torch.no_grad():
         for batch_idx, (data, _) in enumerate(loader):
             output = model(data)
-            print(output.shape)
+            data = data.detach().cpu().numpy().squeeze()
+            data = np.transpose(data, (1,2,0))
+            imageio.imwrite(path / (str(batch_idx) + "_true.png"), data)
+            output = output.detach().cpu().numpy().squeeze()
+            output = np.transpose(output, (1,2,0))
+            imageio.imwrite(path / (str(batch_idx) + "_reconst.png"), output)
 
 
 

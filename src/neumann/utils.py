@@ -33,7 +33,7 @@ def save_model(model_name: MODEL, model: nn.Module, optimizer: Any,
     file_path.mkdir(parents=True, exist_ok=True)
     file_path = file_path / "model.pth"
     state = {
-        "model": model if model_name == MODEL.neumann else model.state_dict(),
+        "model": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
         "acc": acc,
         "epoch": epoch,
