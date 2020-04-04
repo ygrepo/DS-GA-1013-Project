@@ -7,10 +7,10 @@ import torch.backends.cudnn as cudnn
 import torch.nn as nn
 import torch.optim as optim
 
+from src.neumann.RedNet import REDNet10
 from src.neumann.config import get_config
 from src.neumann.data_utils import load_cifar
 from src.neumann.model import Net, NeumannNetwork
-from src.neumann.RedNet import REDNet10
 from src.neumann.operators_blur_cifar import BlurModel, GramianModel
 from src.neumann.trainer import ClassificationTrainer, InverseProblemTrainer
 from src.neumann.utils import set_seed, MODEL, TRAINER
@@ -31,11 +31,6 @@ def make_model(config: Dict[str, Any]):
 
     if model_type == MODEL.neumann:
         reg_model = REDNet10(num_features=32)
-        #reg_model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet18', pretrained=False)
-        # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet34', pretrained=True)
-        # reg_model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet50', pretrained=True)
-        # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet101', pretrained=True)
-        # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet152', pretrained=True)
         reg_model = reg_model.to(config["device"])
         if config["device"] == "cuda":
             reg_model = nn.DataParallel(reg_model)
@@ -79,7 +74,6 @@ def make_trainer(model, optimizer, criterion, train_loader, test_loader, run_id,
 
     if trainer_type == TRAINER.inverse_problem:
         return InverseProblemTrainer(model, optimizer, criterion, train_loader, test_loader, run_id, config)
-
 
     raise ValueError("Unknown trainer!")
 
