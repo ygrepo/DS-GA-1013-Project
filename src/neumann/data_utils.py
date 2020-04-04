@@ -31,7 +31,7 @@ def load_cifar(path: Path, config: Dict[str, Any]):
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
 
-    testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
+    testset = torchvision.datasets.CIFAR10(root=path, train=False, download=True, transform=transform_test)
     testloader = torch.utils.data.DataLoader(testset, batch_size=config["test_batch_size"], shuffle=False,
                                              num_workers=2)
 

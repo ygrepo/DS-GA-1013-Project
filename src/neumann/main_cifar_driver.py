@@ -1,6 +1,7 @@
 import os
 import time
 from typing import Dict, Any
+from pathlib import Path
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -31,8 +32,8 @@ def make_model(config: Dict[str, Any]):
         return model, criterion, optimizer
 
     if model_type == MODEL.neumann:
-        reg_model = ResNet(config["device"])
-        #reg_model = REDNet10(num_features=32)
+        # reg_model = ResNet(config["device"])
+        reg_model = REDNet10(num_features=32)
         #reg_model = REDNet30(num_features=32)
 
         reg_model = reg_model.to(config["device"])
@@ -93,7 +94,7 @@ def train(config: Dict[str, Any], run_id: str):
 
     trainer.train_epochs()
 
-def test(config: Dict[str, Any], run_id: str):
+def test(config: Dict[str, Any], run_id: str, path: Path=Path("data/testing/results")):
     print("Creating model:{}".format(config["model"]))
     model, criterion, optimizer = make_model(config)
     _, _, _, start_epoch = load_model(config["model"], model, optimizer)
@@ -104,6 +105,7 @@ def test(config: Dict[str, Any], run_id: str):
         for batch_idx, (data, _) in enumerate(loader):
             output = model(data)
             print(output.shape)
+
 
 
 
