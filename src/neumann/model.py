@@ -17,6 +17,7 @@ class NeumannNetwork(nn.Module):
         self.eta = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
 
     def forward(self, true_beta):
+        #network_input = true_beta
         network_input = self.forward_adjoint(self.corruption_model(true_beta))
         network_input = self.eta * network_input
         runner = network_input
@@ -25,6 +26,7 @@ class NeumannNetwork(nn.Module):
         # unrolled gradient iterations
         for i in range(self.n_blocks):
             #print(self.forward_gramian(runner).shape)
+            #linear_component = runner - self.eta * runner
             linear_component = runner - self.eta * self.forward_gramian(runner)
             regularizer_output = self.reg_network(runner)
             #print(regularizer_output.shape)

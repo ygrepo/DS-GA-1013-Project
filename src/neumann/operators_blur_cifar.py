@@ -19,7 +19,7 @@ class BlurModel(nn.Module):
         blur_kernel = torch.from_numpy(blur_kernel_repeat).float()
         blur_kernel = blur_kernel.to(device)
         filter.weight.data = blur_kernel
-        #filter.weight.requires_grad = False
+        filter.weight.requires_grad = False
         self.filter = filter
         self.normal_dist = torch.distributions.Normal(loc=torch.tensor([mean_noise]), scale=torch.tensor([sigma_noise]))
 
