@@ -22,6 +22,9 @@ class Trainer(nn.Module):
         self.run_id = str(run_id)
         self.add_run_id = config["add_run_id"]
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=config["decay_rate"])
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,
+                                                         step_size=config["lr_anneal_step"],
+                                                         gamma=config["lr_anneal_rate"])
 
     def train_epochs(self):
         pass

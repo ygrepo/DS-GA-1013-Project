@@ -11,6 +11,7 @@ from src.neumann.RedNet import REDNet10
 from src.neumann.config import get_config
 from src.neumann.data_utils import load_cifar
 from src.neumann.model import Net, NeumannNetwork
+from src.neumann.learned_component_resnet_nblock import ResNet
 from src.neumann.operators_blur_cifar import BlurModel, GramianModel
 from src.neumann.trainer import ClassificationTrainer, InverseProblemTrainer
 from src.neumann.utils import set_seed, MODEL, TRAINER
@@ -30,7 +31,9 @@ def make_model(config: Dict[str, Any]):
         return model, criterion, optimizer
 
     if model_type == MODEL.neumann:
-        reg_model = REDNet10(num_features=32)
+        reg_model = ResNet()
+        #reg_model = REDNet10(num_features=32)
+
         reg_model = reg_model.to(config["device"])
         if config["device"] == "cuda":
             reg_model = nn.DataParallel(reg_model)
