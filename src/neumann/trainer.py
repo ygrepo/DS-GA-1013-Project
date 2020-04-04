@@ -21,6 +21,7 @@ class Trainer(nn.Module):
         self.max_epochs = config["num_of_train_epochs"]
         self.run_id = str(run_id)
         self.add_run_id = config["add_run_id"]
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=config["decay_rate"])
 
     def train_epochs(self):
         pass
@@ -47,6 +48,9 @@ class InverseProblemTrainer(Trainer):
 
             self.train(epoch)
             test_loss, acc = self.test(epoch)
+
+            self.scheduler.step()
+            print("LR:", self.scheduler.get_lr())
 
             # Save checkpoint.
             if test_loss < max_loss:

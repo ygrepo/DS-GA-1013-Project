@@ -26,6 +26,7 @@ def get_config(model: MODEL):
         config.update({
             "model": MODEL.neumann,
             "trainer": TRAINER.inverse_problem,
+            "decay_rate": 0.97,
             "num_of_train_epochs": 100,
             "n_block": 6,  # B in the Neumann networks paper
             "image_dimension": 32,
