@@ -1,7 +1,8 @@
+from typing import Dict, Any
+
 import numpy as np
 import torch
 from torch import nn
-from typing import Dict, Any
 
 
 class BlurModel(nn.Module):
@@ -11,7 +12,8 @@ class BlurModel(nn.Module):
         self.device = device
         self.add_noise = add_noise
         filter = nn.Conv2d(in_channels=channels, out_channels=channels,
-                           padding=(padding, padding), kernel_size=(kernel_size, kernel_size), groups=channels, bias=False)
+                           padding=(padding, padding), kernel_size=(kernel_size, kernel_size), groups=channels,
+                           bias=False)
         blur_kernel = self.special_gauss(size=kernel_size, sigma=filter_sigma)
         blur_kernel_repeat = blur_kernel.reshape((kernel_size, kernel_size, 1, 1))
         blur_kernel_repeat = np.repeat(blur_kernel_repeat, channels, axis=2)
@@ -29,14 +31,13 @@ class BlurModel(nn.Module):
         return g / (g.sum())
 
     def forward(self, input):
-    #def __call__(self, input):
         input = input.to(self.device)
-        #with torch.no_grad():
         output = self.filter(input)
         if not self.add_noise:
             return output
         sample = self.normal_dist.sample((output.view(-1).size())).reshape(output.size()).to(self.device)
         return output.add(sample)
+
 
 class GramianModel(nn.Module):
 
@@ -45,5 +46,4 @@ class GramianModel(nn.Module):
         self.blur_model = BlurModel(config["device"])
 
     def forward(self, input):
-    #def __call__(self, input):
         return self.blur_model(self.blur_model(input))

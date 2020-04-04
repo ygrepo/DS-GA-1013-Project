@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
+import torchvision
 
 
 class SAVE_LOAD_TYPE(Enum):
@@ -75,7 +76,6 @@ def imshow(img):
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
-
 
 def isclose(a,
             b,
@@ -154,3 +154,8 @@ def isclose(a,
     else:
         raise ValueError('method must be one of:'
                          ' "asymmetric", "strong", "weak", "average"')
+
+
+if __name__ == "__main__":
+
+    pass
