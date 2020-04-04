@@ -56,9 +56,9 @@ def make_model(config: Dict[str, Any]):
         # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet101', pretrained=True)
         # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet152', pretrained=True)
         model = model.to(config["device"])
-        if config["device"] == 'cuda':
-            model = nn.DataParallel(model)
-            cudnn.benchmark = True
+        #if config["device"] == 'cuda':
+        #    model = nn.DataParallel(model)
+        #    cudnn.benchmark = True
 
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(model.parameters(), lr=config["learning_rate"], momentum=0.9)

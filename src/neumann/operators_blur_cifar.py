@@ -15,6 +15,7 @@ class BlurModel:
         blur_kernel_repeat = np.repeat(blur_kernel_repeat, channels, axis=2)
         blur_kernel_repeat = np.transpose(blur_kernel_repeat, (2, 3, 0, 1))
         blur_kernel = torch.from_numpy(blur_kernel_repeat).float()
+        blur_kernel = blur_kernel.to(device)
         filter.weight.data = blur_kernel
         filter.weight.requires_grad = False
         self.filter = filter

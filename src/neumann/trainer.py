@@ -47,7 +47,7 @@ class InverseProblemTrainer(Trainer):
         for epoch in range(start_epoch, start_epoch + self.max_epochs):
 
             self.train(epoch)
-            test_loss, acc = self.test(epoch)
+            test_loss = self.test(epoch)
 
             self.scheduler.step()
             print("LR:", self.scheduler.get_lr())
