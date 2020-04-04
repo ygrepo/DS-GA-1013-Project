@@ -31,7 +31,7 @@ def make_model(config: Dict[str, Any]):
         return model, criterion, optimizer
 
     if model_type == MODEL.neumann:
-        reg_model = ResNet()
+        reg_model = ResNet(config["device"])
         #reg_model = REDNet10(num_features=32)
 
         reg_model = reg_model.to(config["device"])

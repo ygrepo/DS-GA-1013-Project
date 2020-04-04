@@ -25,11 +25,12 @@ class ResNetBlock(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, n_channels=128, n_res_blocks=2, ip_channels=3):
+    def __init__(self, device, n_channels=128, n_res_blocks=2, ip_channels=3):
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv2d(ip_channels, n_channels, 1)
 
         self.res_blocks = [ResNetBlock(n_channels) for _ in range(n_res_blocks)]
+        self.res_blocks = [x.to(device) for x in self.res_blocks]
 
         self.conv2 = nn.Conv2d(n_channels, n_channels, 1)
         self.conv3 = nn.Conv2d(n_channels, n_channels, 1)
