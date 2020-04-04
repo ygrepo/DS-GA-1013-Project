@@ -1,6 +1,6 @@
 import torch
 
-from src.neumann.utils import SAVE_LOAD_TYPE, MODEL
+from src.neumann.utils import SAVE_LOAD_TYPE, MODEL, TRAINER
 
 
 def get_config(model: MODEL):
@@ -14,6 +14,7 @@ def get_config(model: MODEL):
     if model == MODEL.net:
         config.update({
             "model": MODEL.net,
+            "trainer": TRAINER.classifier,
             "num_of_train_epochs": 200,
             "learning_rate": 0.001,
             "training_batch_size": 128,
@@ -24,6 +25,7 @@ def get_config(model: MODEL):
     if model == MODEL.neumann:
         config.update({
             "model": MODEL.neumann,
+            "trainer": TRAINER.inverse_problem,
             "num_of_train_epochs": 100,
             "n_block": 6,  # B in the Neumann networks paper
             "image_dimension": 32,
@@ -39,6 +41,7 @@ def get_config(model: MODEL):
     if model == MODEL.resnet:
         config.update({
             "model": MODEL.resnet,
+            "trainer": TRAINER.classifier,
             "num_of_train_epochs": 200,
             "learning_rate": 0.1,
             "training_batch_size": 128,

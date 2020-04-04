@@ -10,9 +10,10 @@ import torch.optim as optim
 from src.neumann.config import get_config
 from src.neumann.data_utils import load_cifar
 from src.neumann.model import Net, NeumannNetwork
+from src.neumann.RedNet import REDNet10
 from src.neumann.operators_blur_cifar import BlurModel, GramianModel
-from src.neumann.trainer import Trainer
-from src.neumann.utils import set_seed, MODEL
+from src.neumann.trainer import ClassificationTrainer, InverseProblemTrainer
+from src.neumann.utils import set_seed, MODEL, TRAINER
 
 
 def make_model(config: Dict[str, Any]):
@@ -29,7 +30,8 @@ def make_model(config: Dict[str, Any]):
         return model, criterion, optimizer
 
     if model_type == MODEL.neumann:
-        reg_model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet18', pretrained=False)
+        reg_model = REDNet10(num_features=32)
+        #reg_model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet18', pretrained=False)
         # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet34', pretrained=True)
         # reg_model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet50', pretrained=True)
         # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet101', pretrained=True)
@@ -70,6 +72,18 @@ def make_model(config: Dict[str, Any]):
     raise ValueError("Unknown model!")
 
 
+def make_trainer(model, optimizer, criterion, train_loader, test_loader, run_id, config):
+    trainer_type = config["trainer"]
+    if trainer_type == TRAINER.classifier:
+        return ClassificationTrainer(model, optimizer, criterion, train_loader, test_loader, run_id, config)
+
+    if trainer_type == TRAINER.inverse_problem:
+        return InverseProblemTrainer(model, optimizer, criterion, train_loader, test_loader, run_id, config)
+
+
+    raise ValueError("Unknown trainer!")
+
+
 set_seed()
 
 run_id = str(int(time.time()))
@@ -87,7 +101,6 @@ except KeyError:
 print("loading data")
 train_loader, test_loader = load_cifar("Data", config)
 model, criterion, optimizer = make_model(config)
-trainer = Trainer(model_name, model, optimizer, criterion, train_loader, test_loader, run_id, config)
+trainer = make_trainer(model, optimizer, criterion, train_loader, test_loader, run_id, config)
 
 trainer.train_epochs()
-# trainer.test()

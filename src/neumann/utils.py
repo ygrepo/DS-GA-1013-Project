@@ -22,6 +22,10 @@ class MODEL(Enum):
     resnet = "resnet"
 
 
+class TRAINER(Enum):
+    classifier = "classifier"
+    inverse_problem = "inverse_problem"
+
 def save_model(model_name: MODEL, model: nn.Module, optimizer: Any,
                acc: float, epoch: int, file_path: Path = Path("models")):
     file_path = file_path / model_name.value

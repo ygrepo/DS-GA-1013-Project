@@ -17,18 +17,16 @@ class NeumannNetwork(nn.Module):
 
     def forward(self, true_beta):
         network_input = self.forward_adjoint(self.corruption_model(true_beta))
-        print(network_input.shape)
         network_input = self.eta * network_input
-        print(network_input.shape)
         runner = network_input
         neumann_sum = runner
 
         # unrolled gradient iterations
         for i in range(self.iterations):
-            print(self.forward_gramian(runner).shape)
+            #print(self.forward_gramian(runner).shape)
             linear_component = runner - self.eta * self.forward_gramian(runner)
             regularizer_output = self.reg_network(runner)
-            print(regularizer_output.shape)
+            #print(regularizer_output.shape)
             runner = linear_component - regularizer_output
             neumann_sum = neumann_sum + runner
 
@@ -37,6 +35,7 @@ class NeumannNetwork(nn.Module):
 
 class Net(nn.Module):
     def __init__(self):
+        super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
@@ -45,11 +44,12 @@ class Net(nn.Module):
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        print(x.shape)
+        #print(f"1.x:{x.shape}")
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 16 * 5 * 5)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
+        #print(f"2.x:{x.shape}")
         return x
