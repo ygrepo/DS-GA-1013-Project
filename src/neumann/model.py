@@ -4,13 +4,20 @@ import torch.nn.functional as F
 
 from typing import Dict, Any
 
+import utils
+
+def apply_mask(data, mask):
+    return torch.where(mask == 0, torch.Tensor([0]), data)
+
+
+# Nuemann network for fastMRI
 class NeumannNetwork(nn.Module):
 
-    def __init__(self, forward_gramian, corruption_model, forward_adjoint, reg_network, config: Dict[str, Any]):
+    def __init__(self, reg_network, config: Dict[str, Any]):
         super(NeumannNetwork, self).__init__()
-        self.forward_gramian = forward_gramian
-        self.corruption_model = corruption_model
-        self.forward_adjoint = forward_adjoint
+        self.forward_gramian = None
+        self.corruption_model = None
+        self.forward_adjoint = None
         self.reg_network = reg_network
         self.iterations = config["n_block"]
         self.eta = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
@@ -34,6 +41,16 @@ class NeumannNetwork(nn.Module):
 
         return neumann_sum
 
+    def parameters(self):
+        return [self.eta,] + self.reg_network.parameters() 
+
+    
+    # Mask should be of dim C*H*W
+    def set_forward_gram_adj_corruption(self, mask):
+        self.corruption_model = lambda data : utils.ifft2(apply_mask(data, mask)) # Apply X*data
+        self.forward_adjoint = lambda data : apply_mask(utils.ifft2(data, mask)) # Apply X^T*data
+        self.forward_gramian = lambda data : self.forward_adjoint( self.corruption_model(data) ) # Apply X^T*X*data
+        # Note that Fourier matrix & mask matrix is symmetric
 
 class Net(nn.Module):
     def __init__(self):
