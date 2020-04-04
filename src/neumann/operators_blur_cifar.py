@@ -41,9 +41,9 @@ class BlurModel(nn.Module):
 
 class GramianModel(nn.Module):
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, device):
         super(GramianModel, self).__init__()
-        self.blur_model = BlurModel(config["device"])
+        self.blur_model = BlurModel(device)
 
     def forward(self, input):
         return self.blur_model(self.blur_model(input))

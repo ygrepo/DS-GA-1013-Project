@@ -45,14 +45,14 @@ def make_model(config: Dict[str, Any]):
         #    reg_model = nn.DataParallel(reg_model)
 
         forward_adjoint = BlurModel(config["device"])
-        forward_gramian = GramianModel(config)
+        forward_gramian = GramianModel(config["device"])
         corruption_model = BlurModel(config["device"], add_noise=True)
         model = NeumannNetwork(forward_gramian=forward_gramian, corruption_model=corruption_model,
                                forward_adjoint=forward_adjoint, reg_network=reg_model, config=config)
         model = model.to(config["device"])
-        # if config["device"] == "cuda":
-        #     model = nn.DataParallel(model)
-        #     cudnn.benchmark = True
+        if config["device"] == "cuda":
+            model = nn.DataParallel(model)
+            cudnn.benchmark = True
 
         optimizer = torch.optim.Adam(model.parameters(), lr=config["learning_rate"])
         criterion = nn.MSELoss()
