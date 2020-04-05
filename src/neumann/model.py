@@ -22,9 +22,9 @@ class NeumannNetwork(nn.Module):
     def forward(self, true_beta):
         network_input = self.forward_adjoint(self.corruption_model(true_beta))
         if self.preconditioned:
-            network_input = self.eta * network_input
-        else:
             network_input = self.cg_pseudoinverse(network_input)
+        else:
+            network_input = self.eta * network_input
         runner = network_input
         neumann_sum = runner
 
