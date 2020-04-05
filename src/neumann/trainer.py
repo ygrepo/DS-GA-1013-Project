@@ -53,7 +53,7 @@ class OnLossTrainer(Trainer):
 
             self.train(epoch)
 
-            test_loss = self.test(epoch).item()
+            test_loss = self.test(epoch)
 
             self.scheduler.step()
             print("LR:", self.scheduler.get_lr())

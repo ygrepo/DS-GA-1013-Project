@@ -34,7 +34,8 @@ def save_model(model_name: MODEL, model: nn.Module, optimizer: Any,
     file_path.mkdir(parents=True, exist_ok=True)
     file_path = file_path / "model.pth"
     state = {
-        "model": model.state_dict() if model_name != MODEL.rednet else model,
+        "model": model,
+        #"model": model.state_dict() if model_name != MODEL.rednet else model,
         "optimizer_state_dict": optimizer.state_dict(),
         "acc": acc,
         "epoch": epoch,
@@ -54,10 +55,7 @@ def load_model(model_name: MODEL, model: nn.Module, optimizer: Any, file_path: P
     else:
         map_location = "cpu"
     checkpoint = torch.load(file_path, map_location=map_location)
-    if model_name == MODEL.rednet:
-        model = checkpoint["model"]
-    else:
-        model.load_state_dict(checkpoint["model"])
+    model = checkpoint["model"]
     optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     acc = checkpoint["acc"]
     start_epoch = checkpoint["epoch"]
