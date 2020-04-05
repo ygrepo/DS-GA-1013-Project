@@ -70,8 +70,8 @@ def make_model(config: Dict[str, Any]):
         return model, criterion, optimizer
 
     if model_type == MODEL.rednet:
-        #model = REDNet10(BlurModel(config["device"], add_noise=True),num_features=config["image_dimension"])
-        model = REDNet20(BlurModel(config["device"], add_noise=True),num_features=config["image_dimension"])
+        model = REDNet10(BlurModel(config["device"], add_noise=True),num_features=config["image_dimension"])
+        #model = REDNet20(BlurModel(config["device"], add_noise=True),num_features=config["image_dimension"])
         model = model.to(config["device"])
         if config["device"] == 'cuda':
             model = nn.DataParallel(model)
@@ -151,8 +151,8 @@ def main():
     except KeyError:
         pass
 
-    train(config, run_id)
-    #test(config)
+    #train(config, run_id)
+    test(config)
 
 if __name__ == "__main__":
     main()

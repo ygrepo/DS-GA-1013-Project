@@ -11,9 +11,11 @@ class REDNet10(nn.Module):
         deconv_layers = []
 
         conv_layers.append(nn.Sequential(nn.Conv2d(3, num_features, kernel_size=3, stride=2, padding=1),
+                                         nn.BatchNorm2d(num_features),
                                          nn.ReLU(inplace=True)))
         for i in range(num_layers - 1):
             conv_layers.append(nn.Sequential(nn.Conv2d(num_features, num_features, kernel_size=3, padding=1),
+                                             nn.BatchNorm2d(num_features),
                                              nn.ReLU(inplace=True)))
 
         for i in range(num_layers - 1):
