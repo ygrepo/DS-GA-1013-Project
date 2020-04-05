@@ -14,11 +14,11 @@ import imageio
 
 from src.neumann.RedNet import REDNet10, REDNet30
 from src.neumann.config import get_config
-from src.neumann.data_utils import load_cifar,load_test_dataset
+from src.neumann.data_utils import load_cifar,load_test_dataset, get_train_valid_loader
 from src.neumann.model import Net, NeumannNetwork
 from src.neumann.learned_component_resnet_nblock import ResNet
 from src.neumann.operators_blur_cifar import BlurModel, GramianModel
-from src.neumann.trainer import ClassificationTrainer, InverseProblemTrainer
+from src.neumann.trainer import ClassificationTrainer, OnLossTrainer
 from src.neumann.utils import set_seed, MODEL, TRAINER, load_model
 
 
@@ -60,10 +60,6 @@ def make_model(config: Dict[str, Any]):
 
     if model_type == MODEL.resnet:
         model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet18', pretrained=True)
-        # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet34', pretrained=True)
-        # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet50', pretrained=True)
-        # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet101', pretrained=True)
-        # model = torch.hub.load('pytorch/vision:v0.5.0', 'resnet152', pretrained=True)
         model = model.to(config["device"])
         if config["device"] == 'cuda':
             model = nn.DataParallel(model)
@@ -73,6 +69,16 @@ def make_model(config: Dict[str, Any]):
         optimizer = optim.SGD(model.parameters(), lr=config["learning_rate"], momentum=0.9)
         return model, criterion, optimizer
 
+    if model_type == MODEL.rednet:
+        model = REDNet10(BlurModel(config["device"], add_noise=True),num_features=config["image_dimension"])
+        model = model.to(config["device"])
+        if config["device"] == 'cuda':
+            model = nn.DataParallel(model)
+            cudnn.benchmark = True
+
+        criterion = nn.MSELoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=config["learning_rate"])
+        return model, criterion, optimizer
     raise ValueError("Unknown model!")
 
 
@@ -81,8 +87,8 @@ def make_trainer(model, optimizer, criterion, train_loader, test_loader, run_id,
     if trainer_type == TRAINER.classifier:
         return ClassificationTrainer(model, optimizer, criterion, train_loader, test_loader, run_id, config)
 
-    if trainer_type == TRAINER.inverse_problem:
-        return InverseProblemTrainer(model, optimizer, criterion, train_loader, test_loader, run_id, config)
+    if trainer_type == TRAINER.on_loss:
+        return OnLossTrainer(model, optimizer, criterion, train_loader, test_loader, run_id, config)
 
     raise ValueError("Unknown trainer!")
 
@@ -93,8 +99,9 @@ def train(config: Dict[str, Any], run_id: str):
     print("Creating model:{}".format(config["model"]))
     model, criterion, optimizer = make_model(config)
     print("loading training data")
-    train_loader, test_loader = load_cifar("data", config)
-    trainer = make_trainer(model, optimizer, criterion, train_loader, test_loader, run_id, config)
+    #train_loader, val_loader = load_cifar("data", config)
+    train_loader, val_loader = get_train_valid_loader(Path("data"), config)
+    trainer = make_trainer(model, optimizer, criterion, train_loader, val_loader, run_id, config)
 
     trainer.train_epochs()
 
@@ -125,7 +132,7 @@ def main():
 
     run_id = str(int(time.time()))
     print("loading config")
-    config = get_config(MODEL.neumann)
+    config = get_config(MODEL.rednet)
     model_name = config["model"]
     print("Starting run={} for model:{}".format(run_id, model_name))
 

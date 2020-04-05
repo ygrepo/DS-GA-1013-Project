@@ -25,15 +25,29 @@ def get_config(model: MODEL):
     if model == MODEL.neumann:
         config.update({
             "model": MODEL.neumann,
-            "trainer": TRAINER.inverse_problem,
+            "trainer": TRAINER.on_loss,
             #"lr_anneal_rate": 0.97,
             "lr_anneal_rate": 0.5,
             "lr_anneal_step": 5,
-            "num_of_train_epochs": 100,
+            "num_of_train_epochs": 15,
             "n_block": 6,  # B in the Neumann networks paper
             "image_dimension": 32,
             "n_samples": 30000,  # Size of training set
             "color_channels": 3,  # Number of spectral channels.
+            "learning_rate": 0.1,
+            "training_batch_size": 128,
+            "test_batch_size": 100,
+        })
+        return config
+
+    if model == MODEL.rednet:
+        config.update({
+            "model": MODEL.rednet,
+            "trainer": TRAINER.on_loss,
+            "lr_anneal_rate": 0.5,
+            "lr_anneal_step": 5,
+            "num_of_train_epochs": 20,
+            "image_dimension": 32,
             "learning_rate": 0.1,
             "training_batch_size": 128,
             "test_batch_size": 100,

@@ -30,11 +30,11 @@ class Trainer(nn.Module):
         pass
 
 
-class InverseProblemTrainer(Trainer):
+class OnLossTrainer(Trainer):
     def __init__(self, model, optimizer, criterion,
                  train_dataloader, test_dataloader, run_id, config):
-        super(InverseProblemTrainer, self).__init__(model, optimizer, criterion,
-                                                    train_dataloader, test_dataloader, run_id, config)
+        super(OnLossTrainer, self).__init__(model, optimizer, criterion,
+                                            train_dataloader, test_dataloader, run_id, config)
 
     def train_epochs(self):
         start_epoch = 0

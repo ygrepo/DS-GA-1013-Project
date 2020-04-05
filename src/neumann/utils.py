@@ -21,11 +21,12 @@ class MODEL(Enum):
     net = "net"
     neumann = "neumann"
     resnet = "resnet"
+    rednet = "rednet"
 
 
 class TRAINER(Enum):
     classifier = "classifier"
-    inverse_problem = "inverse_problem"
+    on_loss = "on_loss"
 
 def save_model(model_name: MODEL, model: nn.Module, optimizer: Any,
                epoch: int, acc: float=0, file_path: Path = Path("models")):
@@ -76,6 +77,7 @@ def imshow(img):
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
+
 
 def isclose(a,
             b,
