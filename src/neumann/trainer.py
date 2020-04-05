@@ -1,5 +1,7 @@
 import time
 
+from math import log10
+
 import torch
 import torch.nn as nn
 from tqdm import tqdm
@@ -31,6 +33,9 @@ class Trainer(nn.Module):
     def train_epochs(self):
         pass
 
+    def test_epochs(self):
+        pass
+
 
 class OnLossTrainer(Trainer):
     def __init__(self, model, optimizer, criterion,
@@ -52,9 +57,7 @@ class OnLossTrainer(Trainer):
         for epoch in range(start_epoch, start_epoch + self.max_epochs):
 
             self.train(epoch)
-
             test_loss = self.test(epoch)
-            print()
 
             self.scheduler.step()
             print("LR:", self.scheduler.get_lr())
@@ -95,13 +98,25 @@ class OnLossTrainer(Trainer):
             loss.backward()
             self.optimizer.step()
 
-        print("===> Training Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch,
+        print("===> Training Epoch {} complete: Avg. Loss: {:.4f}".format(epoch,
                                                                           epoch_loss / len(self.training_data_loader)))
         return epoch_loss
+
+    def test_epochs(self):
+        start_epoch = 0
+        if self.config["reload_model"] == SAVE_LOAD_TYPE.MODEL:
+            _, _, _, start_epoch = load_model(self.model_name, self.model, self.optimizer)
+
+        start_time = time.time()
+        for epoch in range(start_epoch, start_epoch + self.max_epochs):
+            self.test(epoch)
+
+        print("Total Testing in mins: {:5.2f}".format((time.time() - start_time) / 60))
 
     def test(self, epoch):
         self.model.eval()
         test_loss = 0
+        avg_psnr = 0
         with torch.no_grad():
             for batch_num, (inputs, targets) in enumerate(self.test_data_loader):
                 inputs, targets = inputs.to(self.config["device"]), targets.to(self.config["device"])
@@ -115,7 +130,12 @@ class OnLossTrainer(Trainer):
                                                                                           len(self.test_data_loader),
                                                                                           loss.item()))
 
-        print("===> Testing/Validation Epoch {} Complete: Loss: {:.4f}, Avg. Loss: {:.4f}".format(epoch,
+                psnr = 10 * log10(1 / loss.item())
+                avg_psnr += psnr
+
+        print("===> Avg. PSNR: {:.4f} dB".format(avg_psnr / len(self.test_data_loader)))
+
+        print("===> Testing/Validation Epoch {} complete: Loss: {:.4f}, Avg. Loss: {:.4f}".format(epoch,
                                                                                                   test_loss,
                                                                                                   test_loss / len(
                                                                                                       self.test_data_loader)))

@@ -46,7 +46,7 @@ def get_config(model: MODEL):
             "trainer": TRAINER.on_loss,
             "lr_anneal_rate": 0.5,
             "lr_anneal_step": 5,
-            "num_of_train_epochs": 50,
+            "num_of_train_epochs": 15,
             "image_dimension": 32,
             "learning_rate": 0.1,
             "training_batch_size": 128,

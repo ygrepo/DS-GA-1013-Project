@@ -17,7 +17,7 @@ from src.neumann.config import get_config
 from src.neumann.data_utils import load_cifar,load_test_dataset, get_train_valid_loader, get_test_loader
 from src.neumann.model import Net, NeumannNetwork
 from src.neumann.learned_component_resnet_nblock import ResNet
-from src.neumann.operators_blur_cifar import BlurModel, GramianModel
+from src.neumann.operators_blur_cifar import BlurModel, GramianModel,CorruptionModel
 from src.neumann.trainer import ClassificationTrainer, OnLossTrainer
 from src.neumann.utils import set_seed, MODEL, TRAINER, load_model
 
@@ -36,17 +36,15 @@ def make_model(config: Dict[str, Any]):
         return model, criterion, optimizer
 
     if model_type == MODEL.neumann:
-        # reg_model = ResNet(config["device"])
         reg_model = REDNet10(num_features=config["image_dimension"])
-        #reg_model = REDNet30(num_features=32)
 
         reg_model = reg_model.to(config["device"])
-        #if config["device"] == "cuda":
-        #    reg_model = nn.DataParallel(reg_model)
+        if config["device"] == "cuda":
+            reg_model = nn.DataParallel(reg_model)
 
         forward_adjoint = BlurModel(config["device"])
-        forward_gramian = GramianModel(config["device"])
-        corruption_model = BlurModel(config["device"], add_noise=True)
+        forward_gramian = GramianModel(forward_adjoint)
+        corruption_model = CorruptionModel(config["device"], forward_adjoint)
         model = NeumannNetwork(forward_gramian=forward_gramian, corruption_model=corruption_model,
                                forward_adjoint=forward_adjoint, reg_network=reg_model, config=config)
         model = model.to(config["device"])
@@ -70,8 +68,8 @@ def make_model(config: Dict[str, Any]):
         return model, criterion, optimizer
 
     if model_type == MODEL.rednet:
-        model = REDNet10(BlurModel(config["device"], add_noise=True),num_features=config["image_dimension"])
-        #model = REDNet20(BlurModel(config["device"], add_noise=True),num_features=config["image_dimension"])
+        corruption_model = CorruptionModel(config["device"], BlurModel(config["device"]))
+        model = REDNet10(corruption_model,num_features=config["image_dimension"])
         model = model.to(config["device"])
         if config["device"] == 'cuda':
             model = nn.DataParallel(model)
@@ -105,7 +103,16 @@ def train(config: Dict[str, Any], run_id: str):
 
     trainer.train_epochs()
 
-def test(config: Dict[str, Any], path: Path=Path("data/testing/results/")):
+def test(config: Dict[str, Any], run_id: str):
+    print("Creating model:{}".format(config["model"]))
+    model, criterion, optimizer = make_model(config)
+    print("loading testing data")
+    test_loader = get_test_loader(Path("data"), config)
+    trainer = make_trainer(model, optimizer, criterion, None, test_loader, run_id, config)
+
+    trainer.test_epochs()
+
+def test_reconstruction(config: Dict[str, Any], path: Path=Path("data/testing/results/")):
     print("Creating model:{}".format(config["model"]))
     model, criterion, optimizer = make_model(config)
     _, _, _, start_epoch = load_model(config["model"], model, optimizer)
@@ -152,7 +159,8 @@ def main():
         pass
 
     train(config, run_id)
-    #test(config)
+    #test(config, run_id)
+    #test_reconstruction(config)
 
 if __name__ == "__main__":
     main()

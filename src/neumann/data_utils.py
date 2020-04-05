@@ -10,7 +10,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from torchvision import datasets
 
 from src.neumann.config import get_config
-from src.neumann.operators_blur_cifar import BlurModel, GramianModel
+from src.neumann.operators_blur_cifar import BlurModel, GramianModel, CorruptionModel
 from src.neumann.utils import imshow, MODEL
 
 CIFAR10_CLASSES = ('plane', 'car', 'bird', 'cat',
@@ -280,11 +280,11 @@ def main():
     imshow(torchvision.utils.make_grid(forward_adjoint(images)))
     print(" ".join("%5s" % CIFAR10_CLASSES[labels[j]] for j in range(4)))
 
-    forward_gramian = GramianModel(device)
+    forward_gramian = GramianModel(forward_adjoint)
     imshow(torchvision.utils.make_grid(forward_gramian(images)))
     print(" ".join("%5s" % CIFAR10_CLASSES[labels[j]] for j in range(4)))
 
-    corruption_model = BlurModel(device, add_noise=True)
+    corruption_model = CorruptionModel(device, forward_adjoint)
     imshow(torchvision.utils.make_grid(corruption_model(images)))
     print(" ".join("%5s" % CIFAR10_CLASSES[labels[j]] for j in range(4)))
 
