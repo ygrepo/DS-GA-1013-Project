@@ -122,7 +122,7 @@ def get_train_valid_loader(data_dir: Path,
     split = int(np.floor(valid_size * num_train))
 
     if shuffle:
-        #np.random.seed(random_seed)
+        # np.random.seed(random_seed)
         np.random.shuffle(indices)
 
     train_idx, valid_idx = indices[split:], indices[:split]
@@ -153,8 +153,8 @@ def get_train_valid_loader(data_dir: Path,
 
 
 def get_test_loader(data_dir,
-                    batch_size,
-                    shuffle=True,
+                    config: Dict[str, Any],
+                    shuffle=False,
                     num_workers=4,
                     pin_memory=False):
     """
@@ -193,7 +193,7 @@ def get_test_loader(data_dir,
     )
 
     data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=shuffle,
+        dataset, batch_size=config["test_batch_size"], shuffle=shuffle,
         num_workers=num_workers, pin_memory=pin_memory,
     )
 
@@ -219,6 +219,7 @@ def load_test_dataset(path: Path = Path("data/testing")):
     )
     return loader
 
+
 def plot_images(images, cls_true, cls_pred=None):
     """
     Adapted from https://github.com/Hvass-Labs/TensorFlow-Tutorials/
@@ -243,6 +244,7 @@ def plot_images(images, cls_true, cls_pred=None):
         ax.set_yticks([])
 
     plt.show()
+
 
 def main():
     print("loading config")

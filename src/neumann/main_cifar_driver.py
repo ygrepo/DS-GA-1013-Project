@@ -14,7 +14,7 @@ import imageio
 
 from src.neumann.RedNet import REDNet10, REDNet30
 from src.neumann.config import get_config
-from src.neumann.data_utils import load_cifar,load_test_dataset, get_train_valid_loader
+from src.neumann.data_utils import load_cifar,load_test_dataset, get_train_valid_loader, get_test_loader
 from src.neumann.model import Net, NeumannNetwork
 from src.neumann.learned_component_resnet_nblock import ResNet
 from src.neumann.operators_blur_cifar import BlurModel, GramianModel
@@ -99,18 +99,17 @@ def train(config: Dict[str, Any], run_id: str):
     print("Creating model:{}".format(config["model"]))
     model, criterion, optimizer = make_model(config)
     print("loading training data")
-    #train_loader, val_loader = load_cifar("data", config)
     train_loader, val_loader = get_train_valid_loader(Path("data"), config)
     trainer = make_trainer(model, optimizer, criterion, train_loader, val_loader, run_id, config)
 
     trainer.train_epochs()
 
-def test(config: Dict[str, Any], run_id: str, path: Path=Path("data/testing/results/")):
+def test(config: Dict[str, Any], path: Path=Path("data/testing/results/")):
     print("Creating model:{}".format(config["model"]))
     model, criterion, optimizer = make_model(config)
     _, _, _, start_epoch = load_model(config["model"], model, optimizer)
     print("loading testing data")
-    loader = load_test_dataset()
+    loader = get_test_loader(path, config)
     model.eval()
     with torch.no_grad():
         for batch_idx, (data, _) in enumerate(loader):
@@ -142,8 +141,8 @@ def main():
     except KeyError:
         pass
 
-    train(config, run_id)
-    #test(config, run_id)
+    #train(config, run_id)
+    test(config)
 
 if __name__ == "__main__":
     main()

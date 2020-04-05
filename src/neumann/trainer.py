@@ -2,8 +2,10 @@ import time
 
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 
 from src.neumann.utils import SAVE_LOAD_TYPE, MODEL, save_model, load_model, isclose
+from src.neumann.average_meter import AverageMeter
 
 
 class Trainer(nn.Module):
@@ -21,7 +23,7 @@ class Trainer(nn.Module):
         self.max_epochs = config["num_of_train_epochs"]
         self.run_id = str(run_id)
         self.add_run_id = config["add_run_id"]
-        #self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=config["decay_rate"])
+        # self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=config["decay_rate"])
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer,
                                                          step_size=config["lr_anneal_step"],
                                                          gamma=config["lr_anneal_rate"])
@@ -50,7 +52,8 @@ class OnLossTrainer(Trainer):
         for epoch in range(start_epoch, start_epoch + self.max_epochs):
 
             self.train(epoch)
-            test_loss = self.test(epoch)
+
+            test_loss = self.test(epoch).item()
 
             self.scheduler.step()
             print("LR:", self.scheduler.get_lr())
@@ -72,56 +75,48 @@ class OnLossTrainer(Trainer):
 
     def train(self, epoch):
         self.model.train()
-        running_loss = 0
-        total_loss = 0
+        epoch_loss = 0
         for batch_num, data in enumerate(self.training_data_loader):
-            loss = self.train_batch(data)
-            running_loss += loss.item()
-            total_loss += running_loss
+            inputs, targets = data
+            inputs, targets = inputs.to(self.config["device"]), targets.to(self.config["device"])
 
-            if batch_num % 100 == 99:  # print every 2000 mini-batches
-                print("[TRAINING] epoch:{:d}, batch:{:d}, loss:{:8.4f}"
-                      .format(epoch + 1, batch_num + 1, running_loss / (batch_num + 1)))
-                running_loss = 0.0
+            self.optimizer.zero_grad()
+            outputs = self.model(inputs)
+            loss = self.criterion(outputs, inputs)
+            epoch_loss += loss.item()
 
-        return total_loss
+            if batch_num % 99 == 0:  # print every 100 mini-batches
+                print(
+                    "===> Training Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, batch_num, len(self.training_data_loader),
+                                                                          loss.item()))
 
-    def train_batch(self, data):
+            loss.backward()
+            self.optimizer.step()
 
-        # get the inputs; data is a list of [inputs, labels]
-        inputs, targets = data
-        inputs, targets = inputs.to(self.config["device"]), targets.to(self.config["device"])
+        print("===> Training Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch,
+                                                                          epoch_loss / len(self.training_data_loader)))
+        return epoch_loss
 
-        self.optimizer.zero_grad()
-        outputs = self.model(inputs)
-        # print(f"1.outputs:{outputs.shape}")
-        # print(f"2.target:{targets.shape}")
-        loss = self.criterion(outputs, inputs)
-        loss.backward()
-        self.optimizer.step()
 
-        return loss
+def test(self, epoch):
+    self.model.eval()
+    test_loss = 0
+    with torch.no_grad():
+        for batch_num, (inputs, targets) in enumerate(self.test_data_loader):
+            inputs, targets = inputs.to(self.config["device"]), targets.to(self.config["device"])
+            outputs = self.model(inputs)
+            loss = self.criterion(outputs, inputs)
 
-    def test(self, epoch):
-        self.model.eval()
-        test_loss = 0
-        total_loss = 0
-        with torch.no_grad():
-            for batch_num, (inputs, targets) in enumerate(self.test_data_loader):
-                inputs, targets = inputs.to(self.config["device"]), targets.to(self.config["device"])
-                outputs = self.model(inputs)
-                loss = self.criterion(outputs, inputs)
+            test_loss += loss.item()
 
-                test_loss += loss.item()
-                total_loss += test_loss
+            if batch_num % 99 == 0:  # print every 100 mini-batches
+                print("===> Testing/Validation Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, batch_num,
+                                                                                  len(self.test_data_loader),
+                                                                                  loss.item()))
 
-                if batch_num % 100 == 99:  # print every 2000 mini-batches
-                    print("[TESTING] epoch:{:d}, batch:{:d}, loss:{:8.4f}"
-                          .format(epoch + 1, batch_num + 1, test_loss / (batch_num + 1)))
-
-                    test_loss = 0.0
-
-        return total_loss
+    print("===> Testing/Validation Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch,
+                                                                               test_loss / len(self.test_data_loader)))
+    return test_loss
 
 
 class ClassificationTrainer(Trainer):
