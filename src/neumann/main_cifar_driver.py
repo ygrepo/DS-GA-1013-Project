@@ -113,13 +113,21 @@ def test(config: Dict[str, Any], path: Path=Path("data/testing/results/")):
     model.eval()
     with torch.no_grad():
         for batch_idx, (data, _) in enumerate(loader):
-            output = model(data)
-            data = data.detach().cpu().numpy().squeeze()
-            data = np.transpose(data, (1,2,0))
-            imageio.imwrite(path / (str(batch_idx) + "_true.png"), data)
-            output = output.detach().cpu().numpy().squeeze()
-            output = np.transpose(output, (1,2,0))
-            imageio.imwrite(path / (str(batch_idx) + "_reconst.png"), output)
+            print(data.shape)
+            for i in range(data.shape[0]):
+                input = data[i,:,:,:].unsqueeze(0)
+                corruption_model = model.corruption_model
+                corrupted_image = corruption_model(input)
+                output = model(input)
+                input = input.detach().cpu().numpy().squeeze()
+                input = np.transpose(input, (1,2,0))
+                imageio.imwrite(path / (str(i) + "_true.png"), input)
+                output = output.detach().cpu().numpy().squeeze()
+                output = np.transpose(output, (1,2,0))
+                imageio.imwrite(path / (str(i) + "_reconst.png"), output)
+                corrupted_image = corrupted_image.detach().cpu().numpy().squeeze()
+                corrupted_image = np.transpose(corrupted_image, (1,2,0))
+                imageio.imwrite(path / (str(i) + "_corr.png"), corrupted_image)
 
 
 

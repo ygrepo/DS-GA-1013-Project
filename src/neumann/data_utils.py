@@ -1,15 +1,13 @@
 from pathlib import Path
 from typing import Dict, Any
 
+import matplotlib as plt
+import numpy as np
 import torch
 import torchvision
 import torchvision.transforms as transforms
-from torchvision import datasets
 from torch.utils.data.sampler import SubsetRandomSampler
-
-import numpy as np
-
-import matplotlib as plt
+from torchvision import datasets
 
 from src.neumann.config import get_config
 from src.neumann.operators_blur_cifar import BlurModel, GramianModel
@@ -154,7 +152,7 @@ def get_train_valid_loader(data_dir: Path,
 
 def get_test_loader(data_dir,
                     config: Dict[str, Any],
-                    shuffle=False,
+                    shuffle=True,
                     num_workers=4,
                     pin_memory=False):
     """
@@ -194,6 +192,21 @@ def get_test_loader(data_dir,
 
     data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=config["test_batch_size"], shuffle=shuffle,
+        num_workers=num_workers, pin_memory=pin_memory,
+    )
+
+    reconstruct_test = config["reconstruct_test"]
+    if not reconstruct_test:
+        return data_loader
+
+    num_samples = len(dataset)
+    indices = list(range(num_samples))
+    max_samples = config["max_samples"]
+    indices = indices[:max_samples]
+    sampler = SubsetRandomSampler(indices)
+
+    data_loader = torch.utils.data.DataLoader(
+        dataset, batch_size=config["test_batch_size"], sampler=sampler,
         num_workers=num_workers, pin_memory=pin_memory,
     )
 

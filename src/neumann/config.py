@@ -46,11 +46,13 @@ def get_config(model: MODEL):
             "trainer": TRAINER.on_loss,
             "lr_anneal_rate": 0.5,
             "lr_anneal_step": 5,
-            "num_of_train_epochs": 2,
+            "num_of_train_epochs": 50,
             "image_dimension": 32,
             "learning_rate": 0.1,
             "training_batch_size": 128,
             "test_batch_size": 100,
+            "reconstruct_test": True,
+            "max_samples": 10
         })
         return config
 
@@ -61,7 +63,7 @@ def get_config(model: MODEL):
             "num_of_train_epochs": 200,
             "learning_rate": 0.1,
             "training_batch_size": 128,
-            "test_batch_size": 100,
+            "test_batch_size": 10,
         })
         return config
 
