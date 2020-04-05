@@ -151,8 +151,8 @@ def main():
     except KeyError:
         pass
 
-    #train(config, run_id)
-    test(config)
+    train(config, run_id)
+    #test(config)
 
 if __name__ == "__main__":
     main()
