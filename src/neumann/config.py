@@ -30,7 +30,7 @@ def get_config(model: MODEL):
             "lr_anneal_rate": 0.5,
             "lr_anneal_step": 5,
             "num_of_train_epochs": 15,
-            "n_block": 6,  # B in the Neumann networks paper
+            "n_blocks": 6,  # B in the Neumann networks paper
             "image_dimension": 32,
             "n_samples": 30000,  # Size of training set
             "color_channels": 3,  # Number of spectral channels.
@@ -46,7 +46,7 @@ def get_config(model: MODEL):
             "trainer": TRAINER.on_loss,
             "lr_anneal_rate": 0.5,
             "lr_anneal_step": 5,
-            "num_of_train_epochs": 15,
+            "num_of_train_epochs": 1,
             "image_dimension": 32,
             "learning_rate": 0.1,
             "training_batch_size": 128,

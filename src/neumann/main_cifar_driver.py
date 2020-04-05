@@ -36,15 +36,11 @@ def make_model(config: Dict[str, Any]):
         return model, criterion, optimizer
 
     if model_type == MODEL.neumann:
-        reg_model = REDNet10(num_features=config["image_dimension"])
-
-        reg_model = reg_model.to(config["device"])
-        if config["device"] == "cuda":
-            reg_model = nn.DataParallel(reg_model)
-
         forward_adjoint = BlurModel(config["device"])
         forward_gramian = GramianModel(forward_adjoint)
         corruption_model = CorruptionModel(config["device"], forward_adjoint)
+        reg_model = REDNet10(num_features=config["image_dimension"])
+        reg_model = reg_model.to(config["device"])
         model = NeumannNetwork(forward_gramian=forward_gramian, corruption_model=corruption_model,
                                forward_adjoint=forward_adjoint, reg_network=reg_model, config=config)
         model = model.to(config["device"])
@@ -112,7 +108,7 @@ def test(config: Dict[str, Any], run_id: str):
 
     trainer.test_epochs()
 
-def test_reconstruction(config: Dict[str, Any], path: Path=Path("data/testing/results/")):
+def test_reconstruction(config: Dict[str, Any], path: Path=Path("data/testing/cifar-results/")):
     print("Creating model:{}".format(config["model"]))
     model, criterion, optimizer = make_model(config)
     _, _, _, start_epoch = load_model(config["model"], model, optimizer)
@@ -148,7 +144,7 @@ def main():
 
     run_id = str(int(time.time()))
     print("loading config")
-    config = get_config(MODEL.rednet)
+    config = get_config(MODEL.neumann)
     model_name = config["model"]
     print("Starting run={} for model:{}".format(run_id, model_name))
 
