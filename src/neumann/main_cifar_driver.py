@@ -126,6 +126,7 @@ def test(config: Dict[str, Any], path: Path=Path("data/testing/results/")):
 
 
 
+
 def main():
     set_seed()
 
@@ -141,8 +142,8 @@ def main():
     except KeyError:
         pass
 
-    #train(config, run_id)
-    test(config)
+    train(config, run_id)
+    #test(config)
 
 if __name__ == "__main__":
     main()

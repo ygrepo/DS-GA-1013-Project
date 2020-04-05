@@ -98,25 +98,25 @@ class OnLossTrainer(Trainer):
         return epoch_loss
 
 
-def test(self, epoch):
-    self.model.eval()
-    test_loss = 0
-    with torch.no_grad():
-        for batch_num, (inputs, targets) in enumerate(self.test_data_loader):
-            inputs, targets = inputs.to(self.config["device"]), targets.to(self.config["device"])
-            outputs = self.model(inputs)
-            loss = self.criterion(outputs, inputs)
+    def test(self, epoch):
+        self.model.eval()
+        test_loss = 0
+        with torch.no_grad():
+            for batch_num, (inputs, targets) in enumerate(self.test_data_loader):
+                inputs, targets = inputs.to(self.config["device"]), targets.to(self.config["device"])
+                outputs = self.model(inputs)
+                loss = self.criterion(outputs, inputs)
 
-            test_loss += loss.item()
+                test_loss += loss.item()
 
-            if batch_num % 99 == 0:  # print every 100 mini-batches
-                print("===> Testing/Validation Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, batch_num,
-                                                                                  len(self.test_data_loader),
-                                                                                  loss.item()))
+                if batch_num % 99 == 0:  # print every 100 mini-batches
+                    print("===> Testing/Validation Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, batch_num,
+                                                                                      len(self.test_data_loader),
+                                                                                      loss.item()))
 
-    print("===> Testing/Validation Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch,
-                                                                               test_loss / len(self.test_data_loader)))
-    return test_loss
+        print("===> Testing/Validation Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch,
+                                                                                   test_loss / len(self.test_data_loader)))
+        return test_loss
 
 
 class ClassificationTrainer(Trainer):
