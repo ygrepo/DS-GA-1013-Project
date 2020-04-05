@@ -36,7 +36,7 @@ def save_model(model_name: MODEL, model: nn.Module, optimizer: Any,
     state = {
         "model": model,
         #"model": model.state_dict() if model_name != MODEL.rednet else model,
-        "optimizer_state_dict": optimizer.state_dict(),
+        #"optimizer_state_dict": optimizer.state_dict(),
         "acc": acc,
         "epoch": epoch,
     }
@@ -56,7 +56,7 @@ def load_model(model_name: MODEL, model: nn.Module, optimizer: Any, file_path: P
         map_location = "cpu"
     checkpoint = torch.load(file_path, map_location=map_location)
     model = checkpoint["model"]
-    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    #optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     acc = checkpoint["acc"]
     start_epoch = checkpoint["epoch"]
     print(f"Restored checkpoint from {file_path}.")

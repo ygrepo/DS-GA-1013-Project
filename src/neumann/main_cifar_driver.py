@@ -133,12 +133,6 @@ def test_reconstruction(config: Dict[str, Any], data_path: Path=Path("data"), pa
                 corrupted_image = np.transpose(corrupted_image, (1,2,0))
                 imageio.imwrite(path / (str(i) + "_corr.png"), corrupted_image)
 
-
-
-
-
-
-
 def main():
     set_seed()
 
