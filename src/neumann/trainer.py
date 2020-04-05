@@ -54,6 +54,7 @@ class OnLossTrainer(Trainer):
             self.train(epoch)
 
             test_loss = self.test(epoch)
+            print()
 
             self.scheduler.step()
             print("LR:", self.scheduler.get_lr())
@@ -87,7 +88,8 @@ class OnLossTrainer(Trainer):
 
             if batch_num % 99 == 0:  # print every 100 mini-batches
                 print(
-                    "===> Training Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, batch_num, len(self.training_data_loader),
+                    "===> Training Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, batch_num,
+                                                                          len(self.training_data_loader),
                                                                           loss.item()))
 
             loss.backward()
@@ -96,7 +98,6 @@ class OnLossTrainer(Trainer):
         print("===> Training Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch,
                                                                           epoch_loss / len(self.training_data_loader)))
         return epoch_loss
-
 
     def test(self, epoch):
         self.model.eval()
@@ -111,11 +112,13 @@ class OnLossTrainer(Trainer):
 
                 if batch_num % 99 == 0:  # print every 100 mini-batches
                     print("===> Testing/Validation Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, batch_num,
-                                                                                      len(self.test_data_loader),
-                                                                                      loss.item()))
+                                                                                          len(self.test_data_loader),
+                                                                                          loss.item()))
 
-        print("===> Testing/Validation Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch,
-                                                                                   test_loss / len(self.test_data_loader)))
+        print("===> Testing/Validation Epoch {} Complete: Loss: {:.4f}, Avg. Loss: {:.4f}".format(epoch,
+                                                                                                  test_loss,
+                                                                                                  test_loss / len(
+                                                                                                      self.test_data_loader)))
         return test_loss
 
 

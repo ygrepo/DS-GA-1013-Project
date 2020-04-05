@@ -7,7 +7,7 @@ from torch import nn
 
 class BlurModel(nn.Module):
     def __init__(self, device, add_noise: bool = False, kernel_size: int = 5, padding: int = 2,
-                 channels: int = 3, filter_sigma: float = 0.001, mean_noise: float = 0.0, sigma_noise: float = 1.0):
+                 channels: int = 3, filter_sigma: float = 0.001, mean_noise: float = 0.0, sigma_noise: float = 0.5):
         super(BlurModel, self).__init__()
         self.device = device
         self.add_noise = add_noise

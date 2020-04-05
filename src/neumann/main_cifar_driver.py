@@ -12,7 +12,7 @@ import numpy as np
 
 import imageio
 
-from src.neumann.RedNet import REDNet10, REDNet30
+from src.neumann.RedNet import REDNet10, REDNet20, REDNet30
 from src.neumann.config import get_config
 from src.neumann.data_utils import load_cifar,load_test_dataset, get_train_valid_loader, get_test_loader
 from src.neumann.model import Net, NeumannNetwork
@@ -70,7 +70,8 @@ def make_model(config: Dict[str, Any]):
         return model, criterion, optimizer
 
     if model_type == MODEL.rednet:
-        model = REDNet10(BlurModel(config["device"], add_noise=True),num_features=config["image_dimension"])
+        #model = REDNet10(BlurModel(config["device"], add_noise=True),num_features=config["image_dimension"])
+        model = REDNet20(BlurModel(config["device"], add_noise=True),num_features=config["image_dimension"])
         model = model.to(config["device"])
         if config["device"] == 'cuda':
             model = nn.DataParallel(model)
