@@ -108,12 +108,12 @@ def test(config: Dict[str, Any], run_id: str):
 
     trainer.test_epochs()
 
-def test_reconstruction(config: Dict[str, Any], path: Path=Path("data/testing/cifar-results/")):
+def test_reconstruction(config: Dict[str, Any], data_path: Path=Path("data"), path: Path=Path("data/testing/cifar-results/")):
     print("Creating model:{}".format(config["model"]))
     model, criterion, optimizer = make_model(config)
     _, _, _, start_epoch = load_model(config["model"], model, optimizer)
     print("loading testing data")
-    loader = get_test_loader(path, config)
+    loader = get_test_loader(data_path, config)
     model.eval()
     with torch.no_grad():
         for batch_idx, (data, _) in enumerate(loader):

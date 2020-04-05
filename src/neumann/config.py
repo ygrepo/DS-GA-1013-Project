@@ -29,14 +29,14 @@ def get_config(model: MODEL):
             #"lr_anneal_rate": 0.97,
             "lr_anneal_rate": 0.5,
             "lr_anneal_step": 5,
-            "num_of_train_epochs": 15,
+            "learning_rate": 0.1,
+            "num_of_train_epochs": 50,
             "n_blocks": 6,  # B in the Neumann networks paper
             "image_dimension": 32,
-            "n_samples": 30000,  # Size of training set
-            "color_channels": 3,  # Number of spectral channels.
-            "learning_rate": 0.1,
-            "training_batch_size": 128,
-            "test_batch_size": 100,
+            "training_batch_size": 32,
+            "test_batch_size": 32,
+            "reconstruct_test": True,
+            "max_samples": 10
         })
         return config
 
@@ -46,11 +46,11 @@ def get_config(model: MODEL):
             "trainer": TRAINER.on_loss,
             "lr_anneal_rate": 0.5,
             "lr_anneal_step": 5,
-            "num_of_train_epochs": 1,
-            "image_dimension": 32,
             "learning_rate": 0.1,
-            "training_batch_size": 128,
-            "test_batch_size": 100,
+            "num_of_train_epochs": 15,
+            "image_dimension": 32,
+            "training_batch_size": 32,
+            "test_batch_size": 32,
             "reconstruct_test": True,
             "max_samples": 10
         })
