@@ -30,7 +30,7 @@ def get_config(model: MODEL):
             "lr_anneal_rate": 0.5,
             "lr_anneal_step": 5,
             "learning_rate": 0.1,
-            "num_of_train_epochs": 1,
+            "num_of_train_epochs": 50,
             "n_blocks": 6,  # B in the Neumann networks paper
             "image_dimension": 32,
             "training_batch_size": 32,
