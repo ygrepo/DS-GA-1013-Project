@@ -1,13 +1,13 @@
+from typing import Dict, Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from typing import Dict, Any
 
 class NeumannNetwork(nn.Module):
 
-    def __init__(self, forward_gramian, corruption_model, forward_adjoint, reg_network, config: Dict[str, Any],
-                 preconditioned: bool=False, n_iterations: int=10):
+    def __init__(self, forward_gramian, corruption_model, forward_adjoint, reg_network, config: Dict[str, Any]):
         super(NeumannNetwork, self).__init__()
         self.forward_gramian = forward_gramian
         self.corruption_model = corruption_model
@@ -16,8 +16,8 @@ class NeumannNetwork(nn.Module):
         self.n_blocks = config["n_blocks"]
         self.eta = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
         self.lambda_param = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
-        self.preconditioned = preconditioned
-        self.n_iterations = n_iterations
+        self.preconditioned = config["preconditioned"]
+        self.n_iterations = config["n_cg_iterations"]
 
     def forward(self, true_beta):
         network_input = self.forward_adjoint(self.corruption_model(true_beta))
@@ -44,27 +44,30 @@ class NeumannNetwork(nn.Module):
         return neumann_sum
 
     def cg_pseudoinverse(self, input):
+        Ap = self.forward_gramian(input) + self.eta * input
+        return torch.inverse(Ap)
 
-        rtr = input.sum()
-        p = input.clone()
-        i = 0
-        x = torch.zeros_like(input)
-        while (i < self.n_iterations) \
-            and rtr > 1e-10:
-            Ap = self.forward_gramian(p) + self.eta * p
-            alpha = torch.conj(p) * Ap
-            alpha = rtr / alpha.sum()
-            x = x + alpha * p
-            r = r - alpha * Ap
-            r2 = r * r
-            rtr_new = r2.sum()
-            beta = rtr_new / rtr
-            p = p + beta * p
-
-            i += 1
-            rtr = rtr_new
-
-        return x
+        # rtr = input.sum()
+        # p = input.clone()
+        # r = p
+        # i = 0
+        # x = torch.zeros_like(input)
+        # while (i < self.n_iterations) \
+        #         and rtr > 1e-10:
+        #     Ap = self.forward_gramian(p) + self.eta * p
+        #     alpha = p.conj() * Ap
+        #     alpha = rtr / alpha.sum()
+        #     x = x + alpha * p
+        #     r = r - alpha * Ap
+        #     r2 = r * r
+        #     rtr_new = r2.sum()
+        #     beta = rtr_new / rtr
+        #     p = p + beta * p
+        #
+        #     i += 1
+        #     rtr = rtr_new
+        #
+        # return x
 
 
 class Net(nn.Module):
