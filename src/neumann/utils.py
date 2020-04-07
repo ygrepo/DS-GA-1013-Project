@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
+import torchvision
 
 
 class SAVE_LOAD_TYPE(Enum):
@@ -20,16 +21,22 @@ class MODEL(Enum):
     net = "net"
     neumann = "neumann"
     resnet = "resnet"
+    rednet = "rednet"
 
+
+class TRAINER(Enum):
+    classifier = "classifier"
+    on_loss = "on_loss"
 
 def save_model(model_name: MODEL, model: nn.Module, optimizer: Any,
-               acc: float, epoch: int, file_path: Path = Path("models")):
+               epoch: int, acc: float=0, file_path: Path = Path("models")):
     file_path = file_path / model_name.value
     file_path.mkdir(parents=True, exist_ok=True)
     file_path = file_path / "model.pth"
     state = {
-        "model": model if model_name == MODEL.neumann else model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),
+        "model": model,
+        #"model": model.state_dict() if model_name != MODEL.rednet else model,
+        #"optimizer_state_dict": optimizer.state_dict(),
         "acc": acc,
         "epoch": epoch,
     }
@@ -48,8 +55,8 @@ def load_model(model_name: MODEL, model: nn.Module, optimizer: Any, file_path: P
     else:
         map_location = "cpu"
     checkpoint = torch.load(file_path, map_location=map_location)
-    model.load_state_dict(checkpoint["model"])
-    optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    model = checkpoint["model"]
+    #optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     acc = checkpoint["acc"]
     start_epoch = checkpoint["epoch"]
     print(f"Restored checkpoint from {file_path}.")
@@ -232,4 +239,6 @@ def ifft2(data):
     data = torch.ifft(data, 2, normalized=True)
     data = fftshift(data, dim=(-3, -2))
     return data
-
+  
+if __name__ == "__main__":
+    pass

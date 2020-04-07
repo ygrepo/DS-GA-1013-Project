@@ -1,8 +1,9 @@
+from typing import Dict, Any
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from typing import Dict, Any
 
 import utils
 
@@ -41,37 +42,48 @@ def forward_adjoint_helper(data, mask):
 # Nuemann network for fastMRI
 class NeumannNetwork(nn.Module):
 
+    def __init__(self, forward_gramian=None, corruption_model=None, forward_adjoint=None, reg_network=None, config: Dict[str, Any]=None):
     def __init__(self, reg_network, config: Dict[str, Any]):
         super(NeumannNetwork, self).__init__()
         self.kspace_to_img = None
-        self.forward_gramian = None
-        self.corruption_model = None
-        self.forward_adjoint = None
+        
+        self.forward_gramian = forward_gramian
+        self.corruption_model = corruption_model
+        self.forward_adjoint = forward_adjoint
+   
         self.reg_network = reg_network
-        self.iterations = config["n_block"]
+        self.n_blocks = config["n_blocks"]
         self.eta = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
+        self.lambda_param = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
+        self.preconditioned = config["preconditioned"]
+        self.n_iterations = config["n_cg_iterations"]
 
     def forward(self, true_beta):
         network_input = self.forward_adjoint(self.corruption_model(true_beta))
-        print(network_input.shape)
-        network_input = self.eta * network_input
-        print(network_input.shape)
+        if self.preconditioned:
+            network_input = self.cg_pseudoinverse(network_input)
+        else:
+            network_input = self.eta * network_input
         runner = network_input
         neumann_sum = runner
 
         # unrolled gradient iterations
-        for i in range(self.iterations):
-            print(self.forward_gramian(runner).shape)
-            linear_component = runner - self.eta * self.forward_gramian(runner)
-            regularizer_output = self.reg_network(runner)
-            print(regularizer_output.shape)
-            runner = linear_component - regularizer_output
+        for i in range(self.n_blocks):
+            if self.preconditioned:
+                linear_component = self.eta * self.cg_pseudoinverse(runner)
+                learned_component = - self.lambda_param * self.reg_network(runner)
+
+            else:
+                linear_component = runner - self.eta * self.forward_gramian(runner)
+                learned_component = - self.eta * self.reg_network(runner)
+
+            runner = linear_component + learned_component
             neumann_sum = neumann_sum + runner
 
         return neumann_sum
 
     def parameters(self):
-        return [self.eta,] + self.reg_network.parameters() 
+        return [self.eta, self.lambda_param] + self.reg_network.parameters() 
 
     
     # Mask should be of dim C*H*W
@@ -83,8 +95,35 @@ class NeumannNetwork(nn.Module):
         self.forward_gramian = lambda data : self.forward_adjoint( self.corruption_model(data) ) # Apply X^T*X*data
         # Note that matrix from of Fourier & mask is symmetric
 
+    def cg_pseudoinverse(self, input):
+        Ap = self.forward_gramian(input) + self.eta * input
+        return torch.inverse(Ap)
+
+        # rtr = input.sum()
+        # p = input.clone()
+        # r = p
+        # i = 0
+        # x = torch.zeros_like(input)
+        # while (i < self.n_iterations) \
+        #         and rtr > 1e-10:
+        #     Ap = self.forward_gramian(p) + self.eta * p
+        #     alpha = p.conj() * Ap
+        #     alpha = rtr / alpha.sum()
+        #     x = x + alpha * p
+        #     r = r - alpha * Ap
+        #     r2 = r * r
+        #     rtr_new = r2.sum()
+        #     beta = rtr_new / rtr
+        #     p = p + beta * p
+        #
+        #     i += 1
+        #     rtr = rtr_new
+        #
+        # return x
+
 class Net(nn.Module):
     def __init__(self):
+        super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
@@ -93,7 +132,6 @@ class Net(nn.Module):
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        print(x.shape)
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 16 * 5 * 5)
