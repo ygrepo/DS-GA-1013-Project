@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-import torchvision
 
 
 class SAVE_LOAD_TYPE(Enum):
@@ -28,15 +27,16 @@ class TRAINER(Enum):
     classifier = "classifier"
     on_loss = "on_loss"
 
+
 def save_model(model_name: MODEL, model: nn.Module, optimizer: Any,
-               epoch: int, acc: float=0, file_path: Path = Path("models")):
+               epoch: int, acc: float = 0, file_path: Path = Path("models")):
     file_path = file_path / model_name.value
     file_path.mkdir(parents=True, exist_ok=True)
     file_path = file_path / "model.pth"
     state = {
         "model": model,
-        #"model": model.state_dict() if model_name != MODEL.rednet else model,
-        #"optimizer_state_dict": optimizer.state_dict(),
+        # "model": model.state_dict() if model_name != MODEL.rednet else model,
+        # "optimizer_state_dict": optimizer.state_dict(),
         "acc": acc,
         "epoch": epoch,
     }
@@ -56,7 +56,7 @@ def load_model(model_name: MODEL, model: nn.Module, optimizer: Any, file_path: P
         map_location = "cpu"
     checkpoint = torch.load(file_path, map_location=map_location)
     model = checkpoint["model"]
-    #optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+    # optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
     acc = checkpoint["acc"]
     start_epoch = checkpoint["epoch"]
     print(f"Restored checkpoint from {file_path}.")
@@ -162,7 +162,6 @@ def isclose(a,
 ################################ FFT ############################################################
 
 
-
 def roll(x, shift, dim):
     """
     Similar to np.roll but applies to PyTorch Tensors
@@ -207,6 +206,7 @@ def ifftshift(x, dim=None):
         shift = [(x.shape[i] + 1) // 2 for i in dim]
     return roll(x, shift, dim)
 
+
 def fft2(data):
     """
     Apply centered 2 dimensional Fast Fourier Transform.
@@ -239,6 +239,7 @@ def ifft2(data):
     data = torch.ifft(data, 2, normalized=True)
     data = fftshift(data, dim=(-3, -2))
     return data
-  
+
+
 if __name__ == "__main__":
     pass

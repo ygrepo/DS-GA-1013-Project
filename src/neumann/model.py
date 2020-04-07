@@ -4,54 +4,23 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
-import utils
-
-def apply_mask(data, mask):
-    return torch.where(mask == 0, torch.Tensor([0]), data)
+from src.neumann.utils import fft2, ifft2
 
 
-        self.corruption_model = lambda data : # Apply X*data
-        self.forward_adjoint = lambda data : utils.fft2(apply_mask( utils.ifft2(data), mask)) # Apply X^T*data
-
-
-def complex_abs(x):
-    return torch.sqrt(torch.sum(x*x, dim=-1))
-
-def real_to_complex(x):
-    y = torch.unsqueeze(x, -1)
-    return torch.cat([y, torch.zeros(y.shape)], dim=-1)
-
-def corruption_model_helper(data, mask):
-    x = real_to_complex(data)
-    x = utils.fft2(x)
-    x = apply_mask(x, mask)
-    x = utils.ifft2(x)
-    x = complex_abs(x)
-    return x 
-
-def forward_adjoint_helper(data, mask):
-    x = real_to_complex(data)
-    x = utils.ifft2(x)
-    x = apply_mask(x, mask)
-    x = utils.fft2(x)
-    x = complex_abs(x)
-    return x 
-
-
-# Nuemann network for fastMRI
 class NeumannNetwork(nn.Module):
 
-    def __init__(self, forward_gramian=None, corruption_model=None, forward_adjoint=None, reg_network=None, config: Dict[str, Any]=None):
-    def __init__(self, reg_network, config: Dict[str, Any]):
+    def __init__(self, forward_gramian=None, corruption_model=None, forward_adjoint=None, reg_network=None,
+                 config: Dict[str, Any] = None):
         super(NeumannNetwork, self).__init__()
+
         self.kspace_to_img = None
-        
+
         self.forward_gramian = forward_gramian
         self.corruption_model = corruption_model
         self.forward_adjoint = forward_adjoint
-   
+
         self.reg_network = reg_network
+
         self.n_blocks = config["n_blocks"]
         self.eta = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
         self.lambda_param = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
@@ -83,17 +52,43 @@ class NeumannNetwork(nn.Module):
         return neumann_sum
 
     def parameters(self):
-        return [self.eta, self.lambda_param] + self.reg_network.parameters() 
+        return [self.eta, self.lambda_param] + self.reg_network.parameters()
 
-    
-    # Mask should be of dim C*H*W
+        # Mask should be of dim C*H*W
+
     # All function's input and output are complex values.
     def set_transforms(self, mask):
-        self.kspace_to_img = lambda data : utils.ifft2(apply_mask(data, mask))
-        self.corruption_model = lambda data : corruption_model_helper(data, mask) # Apply X*data
-        self.forward_adjoint = lambda data : forward_adjoint(data, mask) # Apply X^T*data
-        self.forward_gramian = lambda data : self.forward_adjoint( self.corruption_model(data) ) # Apply X^T*X*data
+        self.kspace_to_img = lambda data: ifft2(self.pply_mask(data, mask))
+        self.corruption_model = lambda data: self.corruption_model_helper(data, mask)  # Apply X*data
+        self.forward_adjoint = lambda data: self.forward_adjoint_helper(data, mask)  # Apply X^T*data
+        self.forward_gramian = lambda data: self.forward_adjoint(self.corruption_model(data))  # Apply X^T*X*data
         # Note that matrix from of Fourier & mask is symmetric
+
+    def apply_mask(self, data, mask):
+        return torch.where(mask == 0, torch.Tensor([0]), data)
+
+    def complex_abs(self, x):
+        return torch.sqrt(torch.sum(x * x, dim=-1))
+
+    def real_to_complex(self, x):
+        y = torch.unsqueeze(x, -1)
+        return torch.cat([y, torch.zeros(y.shape)], dim=-1)
+
+    def corruption_model_helper(self, data, mask):
+        x = self.real_to_complex(data)
+        x = fft2(x)
+        x = self.apply_mask(x, mask)
+        x = ifft2(x)
+        x = self.complex_abs(x)
+        return x
+
+    def forward_adjoint_helper(self, data, mask):
+        x = self.real_to_complex(data)
+        x = ifft2(x)
+        x = self.apply_mask(x, mask)
+        x = fft2(x)
+        x = self.complex_abs(x)
+        return x
 
     def cg_pseudoinverse(self, input):
         Ap = self.forward_gramian(input) + self.eta * input
@@ -120,6 +115,7 @@ class NeumannNetwork(nn.Module):
         #     rtr = rtr_new
         #
         # return x
+
 
 class Net(nn.Module):
     def __init__(self):
