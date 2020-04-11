@@ -39,7 +39,7 @@ def make_model(config: Dict[str, Any]):
         forward_adjoint = BlurModel(config["device"])
         forward_gramian = GramianModel(forward_adjoint)
         corruption_model = CorruptionModel(config["device"], forward_adjoint)
-        reg_model = REDNet10(num_features=config["image_dimension"])
+        reg_model = REDNet20(num_features=config["image_dimension"])
         reg_model = reg_model.to(config["device"])
         model = NeumannNetwork(forward_gramian=forward_gramian, corruption_model=corruption_model,
                                forward_adjoint=forward_adjoint, reg_network=reg_model, config=config)
