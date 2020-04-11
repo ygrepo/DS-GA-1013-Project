@@ -23,7 +23,7 @@ class NeumannNetwork(nn.Module):
 
         self.n_blocks = config["n_blocks"]
         self.eta = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
-        self.lambda_param = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
+        #self.lambda_param = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
         self.preconditioned = config["preconditioned"]
         self.n_iterations = config["n_cg_iterations"]
 
@@ -44,7 +44,7 @@ class NeumannNetwork(nn.Module):
 
             else:
                 linear_component = runner - self.eta * self.forward_gramian(runner)
-                learned_component = - self.eta * self.reg_network(runner)
+                learned_component = -self.reg_network(runner)
 
             runner = linear_component + learned_component
             neumann_sum = neumann_sum + runner
