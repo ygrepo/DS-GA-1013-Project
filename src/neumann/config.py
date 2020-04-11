@@ -35,7 +35,7 @@ def get_config(model: MODEL):
             "image_dimension": 32,
             "training_batch_size": 32,
             "test_batch_size": 32,
-            "preconditioned": True,
+            "preconditioned": False,
             "n_cg_iterations": 10,
             "reconstruct_test": True,
             "max_samples": 10

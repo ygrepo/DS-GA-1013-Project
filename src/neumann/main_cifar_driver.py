@@ -148,9 +148,9 @@ def main():
     except KeyError:
         pass
 
-    train(config, run_id)
+    #train(config, run_id)
     #test(config, run_id)
-    #test_reconstruction(config)
+    test_reconstruction(config)
 
 if __name__ == "__main__":
     main()
