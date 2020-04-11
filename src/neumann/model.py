@@ -52,7 +52,8 @@ class NeumannNetwork(nn.Module):
         return neumann_sum
 
     def parameters(self):
-        return list([self.eta, self.lambda_param]) + list(self.reg_network.parameters())
+        return list([self.eta]) + list(self.reg_network.parameters())
+        #return list([self.eta, self.lambda_param]) + list(self.reg_network.parameters())
 
         # Mask should be of dim C*H*W
 
