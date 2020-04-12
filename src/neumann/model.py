@@ -44,7 +44,7 @@ class NeumannNetwork(nn.Module):
 
             else:
                 linear_component = runner - self.eta * self.forward_gramian(runner)
-                learned_component = -self.reg_network(runner)
+                learned_component = -self.eta * self.reg_network(runner)
 
             runner = linear_component + learned_component
             neumann_sum = neumann_sum + runner
