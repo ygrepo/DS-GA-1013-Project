@@ -23,7 +23,7 @@ class NeumannNetwork(nn.Module):
 
         self.n_blocks = config["n_blocks"]
         self.eta = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
-        #self.lambda_param = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
+        self.lambda_param = nn.Parameter(torch.Tensor([0.1]), requires_grad=True)
         self.preconditioned = config["preconditioned"]
         self.n_iterations = config["n_cg_iterations"]
 
@@ -44,7 +44,7 @@ class NeumannNetwork(nn.Module):
 
             else:
                 linear_component = runner - self.eta * self.forward_gramian(runner)
-                learned_component = -self.eta * self.reg_network(runner)
+                learned_component = -self.lambda_param * self.reg_network(runner)
 
             runner = linear_component + learned_component
             neumann_sum = neumann_sum + runner
@@ -52,8 +52,8 @@ class NeumannNetwork(nn.Module):
         return neumann_sum
 
     def parameters(self):
-        return list([self.eta]) + list(self.reg_network.parameters())
-        #return list([self.eta, self.lambda_param]) + list(self.reg_network.parameters())
+        #return list([self.eta]) + list(self.reg_network.parameters())
+        return list([self.eta, self.lambda_param]) + list(self.reg_network.parameters())
 
         # Mask should be of dim C*H*W
 
