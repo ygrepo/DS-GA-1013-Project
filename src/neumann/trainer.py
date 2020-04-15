@@ -1,13 +1,10 @@
 import time
-
 from math import log10
 
 import torch
 import torch.nn as nn
-from tqdm import tqdm
 
 from src.neumann.utils import SAVE_LOAD_TYPE, MODEL, save_model, load_model, isclose
-from src.neumann.average_meter import AverageMeter
 
 
 class Trainer(nn.Module):
