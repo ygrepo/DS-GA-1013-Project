@@ -141,6 +141,7 @@ The estimated reconstructed image is given by:
 \op{prox}_{r}\brac{\vect{\beta}} := \arg \min_{\vect{\beta}} r\brac{\vect{\beta}}+ \frac{1}{2} \normTwo{\vect{y}-\matr{X}\vect{\beta}}^2  \label{eq:2}
 \end{equation}
 
+
 Assuming that $r\brac{\vect{\beta}} = \frac{1}{2} \vect{\beta}^T \vect{R} \vect{\beta}$ then taking the gradient of the \eqref{eq:2}, leads to the optimal solution $\vect{\beta}^{\ast}$
 \begin{align*}
 	(\matr{X}^T \matr{X} + \matr{R}) \matr{\beta}^* &=	\matr{X}^T \vect{y} \\
@@ -151,7 +152,7 @@ assuming $\|\matr{A}\|_{l_i} < 1$ where $l_i$ is an operator norm. We are now in
 \begin{align*}
 	(\matr{I} - \matr{A})^{-1}	&= \sum_{k=0}^{\infty} \matr{A}^k = \matr{I} + \matr{A} + \matr{A}^2 + \matr{A}^3 + \cdots \\ 
 	\matr{B}^{-1}			&= \eta  \sum_{k=0}^{\infty}  (\matr{I} - \eta \matr{B})^k \text{~ ancillary result} \\	
-	\matr{\beta}^*			&=  \sum_{j=0}^{\infty} (\matr{I} - \eta \matr{X}^T \matr{X} -\eta \matr{R})^j (\eta \matr{X}^T \vect{y}) \\
+	\matr{\beta}^{\ast}		&=  \sum_{j=0}^{\infty} (\matr{I} - \eta \matr{X}^T \matr{X} -\eta \matr{R})^j (\eta \matr{X}^T \vect{y}) \\
 	\hat{\matr{\beta}}(\vect{y})  &:=  \sum_{j=0}^{B} \bigg([ \matr{I} - \eta \matr{X}^T \matr{X} ](\cdot) -\eta \matr{R}(\cdot) \bigg)^j (\eta \matr{X}^T \vect{y}) \\	
 \end{align*}
 The last equation has a natural recursive form which is easily interpretable as a deep learning architecture:
@@ -164,6 +165,7 @@ The last equation has a natural recursive form which is easily interpretable as 
 		\captionsetup{justification=centering}
 		\includegraphics[width=400pt]{nn_architecture}
 		\caption{Neumann Network Architecture}
+		\label{fig:nn_architecture}
 	\end{figure}
 One interesting lemma established by Gilton et Al, is that the finite sum $\sum_{j=0}^{B} \tilde{\vect{\beta}}^{(j)} $ provides indeed an estimate for the reconstructed image $\tilde{\vect{\beta}}(\vect{y})$  approximatively equal to the optimal reconstruction  $\vect{\beta}^{\ast}$, almost \emph{independently} of the number of iterations, which is a result we recovered through our experiments.
 
@@ -175,10 +177,10 @@ $$ where $\tilde{\vect{\beta}}^{(0)} = \eta \matr{X}^T \vect{y}, \vect{y} = \mat
 
 then
 \begin{align*}
-	\tilde{\vect{\beta}}^{(j)}			&=  a_j \matr{X}^T \matr{X} \vect{\beta}^* + b_j (\matr{I} - \matr{X}^T \matr{X} ) \vect{\beta}^* \\
+	\tilde{\vect{\beta}}^{(j)}			&=  a_j \matr{X}^T \matr{X} \vect{\beta}^* + b_j (\matr{I} - \matr{X}^T \matr{X} ) \vect{\beta}^{\ast} \\
 		&\text{ where } \sum_j a_j \approx 1 \text{ and }  \sum_j b_j \approx 1  \\
 	\hat{\vect{\beta}}(\vect{y})	&= \sum_{j=0}^B \tilde{\vect{\beta}}^{(j)} \\
-						&\approx \matr{X}^T \matr{X}  \vect{\beta}^* + (\matr{I} - \matr{X}^T \matr{X} ) \vect{\beta}^* =   \vect{\beta}^* \\
+						&\approx \matr{X}^T \matr{X}  \vect{\beta}^* + (\matr{I} - \matr{X}^T \matr{X} ) \vect{\beta}^* =   \vect{\beta}^{\ast} \\
 \end{align*}
 
 
@@ -215,7 +217,7 @@ $$
 	\argmin_\theta \frac{1}{2} \sum_{j=1}^N \| \tilde{\vect{\beta}}(\vect{y}) - \vect{\beta}_{\text{true}} \|_1, N=\text{ number of samples }
 $$
      We ran various experiments with different number of iterations blocks $B$, network hyperpameter $\theta$ and training sizes.
-     We used a learning rate of $0.001$, which was multiplied by $0.1$ after $40$ epochs when the model was initially trained for $50$ epochs but realized that the network was quickly reaching its best performance metrics after few epochs. At the end of each epoch, we set up a validation step where we recorded the NMSE, SSIM, PSNR and the validation loss.
+     We used RMSProp with a learning rate of $0.001$, which was multiplied by $0.1$ after $40$ epochs when the model was initially trained for $50$ epochs but realized that the network was quickly reaching its best performance metrics after few epochs. At the end of each epoch, we set up a validation step where we recorded the NMSE, SSIM, PSNR and the validation loss.
    
 
 \begin{figure}[H] 
@@ -232,7 +234,7 @@ $$
     \end{subfigure}% 
 \end{figure}
 
-Compared to the plain U-Net, the performances of Neumann network are similar. We can detect some improvements when looking closely to some of the  reconstructed images.
+Compared to the plain U-Net, the performances of Neumann network are similar. We can detect some improvements when looking more closely at the reconstructed images.
 	\begin{figure}[H]
 		\centering
 		\captionsetup{justification=centering}
@@ -267,6 +269,54 @@ Compared to the plain U-Net, the performances of Neumann network are similar. We
     \end{subfigure}% 
 \end{figure}
 
+\section{Ill-posedness and non-linearity in the reconstruction process}
+When the matrix $\matr{X}^T \matr{X} + \matr{R}$ is ill-conditioned, which happens in most cases, the authors propose a preconditioning:
+\begin{align*}
+	(\matr{X}^T \matr{X} + \matr{R}) \matr{\beta}^{\ast} &=	\matr{X}^T \vect{y} \\
+	(\matr{X}^T \matr{X} + \lambda \matr{I})  \matr{\beta}^{\ast} + ( \matr{R} -  \lambda \matr{I})   \matr{\beta}^{\ast} &= \matr{X}^T \vect{y} \\
+\end{align*}
+Applying $	\matr{T}_{\lambda} := (\matr{X}^T \matr{X} + \lambda \matr{I})^{-1}$ to both sides and rearranging the terms gives
+\begin{align*}
+	(\matr{I} - \lambda \matr{T}_{\lambda} + \tilde{\matr{R}}) \matr{\beta}^{\ast} &= \matr{T}_{\lambda} \matr{X}^T \vect{y}, 
+	 \tilde{\matr{R}} =  \matr{T}_{\lambda} \matr{R} \\
+\hat{\matr{\beta}}_{\text{pc}}(\vect{y})  &=  \sum_{j=0}^{B}  \bigg( \lambda  \matr{T}_{\lambda}(\cdot) -   \tilde{\matr{R}}(\cdot) \bigg)^j  \matr{T}_{\lambda} \matr{X}^T \vect{y} \\		 
+\end{align*}
+In our experiments with the fastMRI datasets, a preconditioned Neumann network did not achieve higher quality results.
+
+An attempt to address the non-linearities of the MRI process using an unrolled Gradient Descent scheme would be to use the Adomian decomposition method.
+In this method, the studied equation representing the non-linearities of the physical model is $L(u) + R(u) + N(u)  = q$ where $L$ is a linear operator, $N$ is an analytical nonlinear operator. Solving for $L(u)$ gives: $L(u) = g - R(u) -N(u)$. Assuming $L$ invertible, the expression becomes:
+\begin{equation}
+	L^{-1} L (u) = L^{-1} g - L^{-1} R(u) - L^{-1} N(u) \label{eq:adom1}
+\end{equation}
+leading to the solution of the initial equation as
+\begin{equation}
+	u = \sum_{i=0}^\infty u_i \label{eq:adom2}
+\end{equation}	
+ 
+ The non-linear term $N(u)$ can be decomposed by the infinite series of Adomian polynomials
+\begin{equation}
+N(u) =  \sum_{i=0}^\infty A_i  \label{eq:adom3}
+\end{equation}	
+
+The $A_i$'s are given as:
+\begin{align*}
+	A_0	&=	F(u_0) \\
+	A_1	&=	u_1 \frac{d}{d \, u_0} F(u_0) \\
+	A_2	&=	u_2 \frac{d}{d \, u_0} F(u_0) + \frac{u_1^2}{2!}  \frac{d^2}{d \, u_0^2} F(u_0)  \\
+	\vdots
+\end{align*}
+Substituting back \eqref{eq:adom2} and \eqref{eq:adom3} into \eqref{eq:adom1} yields
+\begin{equation}
+	 \sum_{i=0}^\infty u_i  =  u_0  + L^{-1} R( \sum_{i=0}^\infty u_i) -   L^{-1}    \sum_{i=0}^\infty  A_i \label{eq:adom4}
+\end{equation}	
+With a suitable $u_0$ we obtain
+\begin{align*}
+	u_1 			&=	-L^{-1} R(u_0) - L^{-1} A_0 \\
+	\vdots \\
+	u_{n+1} 		&=  -L^{-1} R(u_n) - L^{-1} A_n \\
+\end{align*}
+
+Thus assuming the linear operator $L$ and  Adomian polynomials $A_I, I=1,\cdots,n$ can be analytically determined, we can reuse a deep learning architecture similar to \ref{fig:nn_architecture}, the regulizer could be a FFN trained with observed data points $\{x_i,u_i\}, i=1,\cdots,n$ using a mean square loss function (MSE).
 
 %\bibliographystyle{plainnat}
 %\bibliography{references}
