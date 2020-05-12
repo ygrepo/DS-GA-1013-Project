@@ -97,7 +97,6 @@
   many natural sciences, medicine and life sciences, challenging applications.
  Our goal in this work has been first to perform a quick survey of data-driven inverse problem methodologies, followed by an understanding of the key ideas at the core of a Neumann Network and its implementation
  and application to the task of image reconstruction using the fastMRI dataset, a very-large collection of  undersampled Magnetic Resonance Imaging (MRI) measurements. 
-
   \end{abstract}
   
  \section{Introduction}
@@ -167,7 +166,7 @@ The last equation has a natural recursive form which is easily interpretable as 
 		\caption{Neumann Network Architecture}
 		\label{fig:nn_architecture}
 	\end{figure}
-One interesting lemma established by Gilton et Al, is that the finite sum $\sum_{j=0}^{B} \tilde{\vect{\beta}}^{(j)} $ provides indeed an estimate for the reconstructed image $\tilde{\vect{\beta}}(\vect{y})$  approximatively equal to the optimal reconstruction  $\vect{\beta}^{\ast}$, almost \emph{independently} of the number of iterations, which is a result we recovered through our experiments.
+One interesting lemma established by Gilton et Al (\cite{DBLP:journals/corr/abs-1901-03707}), is that the finite sum $\sum_{j=0}^{B} \tilde{\vect{\beta}}^{(j)} $ provides indeed an estimate for the reconstructed image $\tilde{\vect{\beta}}(\vect{y})$  approximatively equal to the optimal reconstruction  $\vect{\beta}^{\ast}$, almost \emph{independently} of the number of iterations, which is a result we recovered through our experiments.
 
 Assuming that the autoencoder is linear with the input 
 $$
@@ -208,7 +207,7 @@ known as \emph{k-space}. In absence of noise or undersampling, the true image $\
 \subsection{Deep learning architecture}
 Two steps are critical when creating a Neumann network
 \begin{itemize}
-\item defining the forward operator $\matr{X}$ and the gramian operator $\matr{X}^T \matr{X}$.
+\item defining the forward operator $\matr{X}$ and the gramian operator $\matr{X}^T \matr{X}$
 \item selecting an autoencoder $\matr{R}$ as regulizer
 \end{itemize}
 
@@ -219,7 +218,6 @@ $$
      We ran various experiments with different number of iterations blocks $B$, network hyperpameter $\theta$ and training sizes.
      We used RMSProp with a learning rate of $0.001$, which was multiplied by $0.1$ after $40$ epochs when the model was initially trained for $50$ epochs but realized that the network was quickly reaching its best performance metrics after few epochs. At the end of each epoch, we set up a validation step where we recorded the NMSE, SSIM, PSNR and the validation loss.
    
-
 \begin{figure}[H] 
 \centering
    \begin{subfigure}[b]{.5\textwidth}
@@ -234,7 +232,7 @@ $$
     \end{subfigure}% 
 \end{figure}
 
-Compared to the plain U-Net, the performances of Neumann network are similar. We can detect some improvements when looking more closely at the reconstructed images.
+Compared to the plain U-Net, the performances of Neumann network are similar. We can detect some improvements when looking more closely at the reconstructed images  \ref{fig:reconstructed_images}.
 	\begin{figure}[H]
 		\centering
 		\captionsetup{justification=centering}
@@ -261,6 +259,7 @@ Compared to the plain U-Net, the performances of Neumann network are similar. We
    \centering   
         \includegraphics[width=.95\linewidth]{neumann_reconstruction}
         \caption{Neumann reconstruction}
+        \label{fig:reconstructed_images}
     \end{subfigure}% 
    \begin{subfigure}[]{.5\textwidth}
    \centering   
@@ -270,7 +269,7 @@ Compared to the plain U-Net, the performances of Neumann network are similar. We
 \end{figure}
 
 \section{Ill-posedness and non-linearity in the reconstruction process}
-When the matrix $\matr{X}^T \matr{X} + \matr{R}$ is ill-conditioned, which happens in most cases, the authors propose a preconditioning:
+When the matrix $\matr{X}^T \matr{X} + \matr{R}$ is ill-conditioned, which happens in most cases, the authors, Gilton et Al (\cite{DBLP:journals/corr/abs-1901-03707}),  propose a preconditioning:
 \begin{align*}
 	(\matr{X}^T \matr{X} + \matr{R}) \matr{\beta}^{\ast} &=	\matr{X}^T \vect{y} \\
 	(\matr{X}^T \matr{X} + \lambda \matr{I})  \matr{\beta}^{\ast} + ( \matr{R} -  \lambda \matr{I})   \matr{\beta}^{\ast} &= \matr{X}^T \vect{y} \\
@@ -317,8 +316,8 @@ With a suitable $u_0$ we obtain
 \end{align*}
 
 Thus assuming the linear operator $L$ and  Adomian polynomials $A_I, I=1,\cdots,n$ can be analytically determined, we can reuse a deep learning architecture similar to \ref{fig:nn_architecture}, the regulizer could be a FFN trained with observed data points $\{x_i,u_i\}, i=1,\cdots,n$ using a mean square loss function (MSE).
-
-%\bibliographystyle{plainnat}
-%\bibliography{references}
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references}
 \end{document}
 
