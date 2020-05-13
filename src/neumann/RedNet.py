@@ -4,9 +4,8 @@ from torch import nn
 
 
 class REDNet10(nn.Module):
-    def __init__(self, corruption_model=None, num_layers=5, num_features=64):
+    def __init__(self, num_layers=5, num_features=64):
         super(REDNet10, self).__init__()
-        self.corruption_model = corruption_model
         conv_layers = []
         deconv_layers = []
 
@@ -28,8 +27,6 @@ class REDNet10(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        if self.corruption_model:
-            x = self.corruption_model(x)
         residual = x
         out = self.conv_layers(x)
         out = self.deconv_layers(out)
@@ -39,9 +36,8 @@ class REDNet10(nn.Module):
 
 
 class REDNet20(nn.Module):
-    def __init__(self, corruption_model=None, num_layers=10, num_features=64):
+    def __init__(self, num_layers=10, num_features=64):
         super(REDNet20, self).__init__()
-        self.corruption_model = corruption_model
         self.num_layers = num_layers
 
         conv_layers = []
@@ -63,8 +59,6 @@ class REDNet20(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        if self.corruption_model:
-            x = self.corruption_model(x)
 
         residual = x
 
@@ -90,9 +84,8 @@ class REDNet20(nn.Module):
 
 
 class REDNet30(nn.Module):
-    def __init__(self, corruption_model=None, num_layers=15, num_features=64):
+    def __init__(self, num_layers=15, num_features=64):
         super(REDNet30, self).__init__()
-        self.corruption_model = corruption_model
         self.num_layers = num_layers
 
         conv_layers = []
@@ -114,8 +107,6 @@ class REDNet30(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        if self.corruption_model:
-            x = self.corruption_model(x)
         residual = x
 
         conv_feats = []

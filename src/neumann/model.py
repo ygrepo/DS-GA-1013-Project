@@ -4,8 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import masks
-import corruption_model
 
 
 class NeumannNetwork(nn.Module):
@@ -43,8 +41,8 @@ class NeumannNetwork(nn.Module):
                 learned_component = - self.lambda_param * self.real_to_complex( self.reg_network( self.complex_abs(runner) ) )
 
             else:
-                linear_component = runner - self.eta * self.corr.XT_X(runner)
-                learned_component = - self.eta * self.real_to_complex( self.reg_network( self.complex_abs(runner) ) )
+                linear_component = runner - self.eta * self.forward_gramian(runner)
+                learned_component = - self.reg_network(runner)
 
             runner = linear_component + learned_component
             neumann_sum = neumann_sum + runner
@@ -52,7 +50,8 @@ class NeumannNetwork(nn.Module):
         return self.complex_abs( neumann_sum )
 
     def parameters(self):
-        return [self.eta, self.lambda_param] + self.reg_network.parameters()
+        #return list([self.eta]) + list(self.reg_network.parameters())
+        return list([self.eta, self.lambda_param]) + list(self.reg_network.parameters())
 
         # Mask should be of dim C*H*W
 
