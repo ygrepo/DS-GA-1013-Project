@@ -346,8 +346,8 @@ It is not linear and could not be easily integrated in the neumann Network archi
 Metrics used during our experiments
 \begin{itemize}
 	\item Normalized Mean Square Error: $\frac{ \| \vect{\beta} - \hat{\vect{\beta}} \|_2^2 } { \|  \vect{\beta} \|_2^2 }$
-	\item Peak Signal to Noise Ratio: $10 \log_{10} \frac {\max({\vect{\beta}})^2 } {\text{MSE} (\vect{\beta}, \hat{\vect{\beta}})}$
-	\item Structure Similarity:
+	\item Peak Signal to Noise Ratio: $10 \log_{10} \frac {\max({\vect{\beta}})^2 } {\MSE (\vect{\beta}, \hat{\vect{\beta}})}$
+	\item Structure Similarity: $\frac{ ( 2 \, \E(\vect{\beta})  \E( \hat{\vect{\beta}}) + c_1) (2 \Cov(\vect{\beta},  \hat{\vect{\beta}}) + c_2) } { (\E(\vect{\beta})^2 +  \E( \hat{\vect{\beta}})^2 + c_1) \, (\Var(\vect{\beta}) +  \Var( \hat{\vect{\beta}}) + c_2) }$
 \end{itemize}
 
  
