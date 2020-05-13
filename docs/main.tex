@@ -120,7 +120,7 @@ value decomposition. The decay of the spectral spectrum $\sigma_k, k \in \mathca
 		\includegraphics[width=200pt]{variance_plot_log.pdf}
 		\caption{$50$ first singular value of the k-space of an image from the fastMRI dataset after undersampling.}
 	\end{figure}
-The problem defined in \eqref{eq:1}, can be formulated as an ordinary least squares problem (OLS) , given a set of training images $\{\vect{y_1}, \vect{y_2}, \ldots, \vect{y_n}\}$, and an operator $\mathcal{A}$, we want to compute the estimates 
+The problem defined in \eqref{eq:1}, can be formulated as an ordinary least squares problem (OLS) , given a set of training images $\{\vect{y_1}, \vect{y_2}, \ldots, \vect{y_n}\}$, and a linear operator $\mathcal{A}$ simulating the MRI measurement process, we want to compute the estimates 
 $\vect{\beta}$ which satisfy:
 $$
 \hat{\vect{\beta}}  =  \argmin_{\beta} \| \vect{y} -\mathcal{A} \vect{\beta} \|_2^2
@@ -129,12 +129,12 @@ The aim of regularization theory is to provide a regularizer $r(\cdot)$ which pu
 $$
 \hat{\vect{\beta}}  =  \argmin_{\beta} \frac{1}{2} \| \vect{y} -\mathcal{A} \vect{\beta} \|_2^2 + r(\vect{\beta})
 $$
-The regularization operator $r(\cdot)$, is a denoising encoder and one approach to solve these inverse problems is to learn $r(\cdot)$. 
+The regularization operator $r(\cdot)$, is a denoising encoder and one approach to solve this inverse problem, is to learn $r(\cdot)$. 
  
 \section{Theory}
 \label{Theory}
 
-The core idea of a Neumann network, it is to use a denoising autoencoder as a proximal operator in an iterative scheme.
+The core idea of a Neumann network, is to use a denoising autoencoder as a proximal operator in an iterative scheme.
 The estimated reconstructed image is given by:
 \begin{equation}
 \op{prox}_{r}\brac{\vect{\beta}} := \arg \min_{\vect{\beta}} r\brac{\vect{\beta}}+ \frac{1}{2} \normTwo{\vect{y}-\matr{X}\vect{\beta}}^2  \label{eq:2}
@@ -154,7 +154,7 @@ assuming $\|\matr{A}\|_{l_i} < 1$ where $l_i$ is an operator norm. We are now in
 	\matr{\beta}^{\ast}		&=  \sum_{j=0}^{\infty} (\matr{I} - \eta \matr{X}^T \matr{X} -\eta \matr{R})^j (\eta \matr{X}^T \vect{y}) \\
 	\hat{\matr{\beta}}(\vect{y})  &:=  \sum_{j=0}^{B} \bigg([ \matr{I} - \eta \matr{X}^T \matr{X} ](\cdot) -\eta \matr{R}(\cdot) \bigg)^j (\eta \matr{X}^T \vect{y}) \\	
 \end{align*}
-The last equation has a natural recursive form which is easily interpretable as a deep learning architecture:
+The last equation has a natural recursive form, which is easily interpretable as a deep learning architecture:
 \begin{align*}
 	\tilde{\vect{\beta}}^{(j)} 		&:=	\bigg( \matr{I} - \eta \matr{X}^T \matr{X} \bigg) \tilde{\vect{\beta}}^{(j-1)} - \eta R(\tilde{\vect{\beta}}^{(j-1)}), j=1, \cdots , B \\
 	\tilde{\vect{\beta}}(\vect{y})	&:=   \sum_{j=0}^{B} \tilde{\vect{\beta}}^{(j)} \\
@@ -188,7 +188,7 @@ then
 
 \subsection{Data Preparation}
 The raw MRI data includes $8344$ volumes, consisting of $167,375$ slices or images of knees or brain examinations. The measurements are in the Fourier-space domain,
-known as \emph{k-space}. In absence of noise or undersampling, the true image $\beta_{\text{true}}$ can be fully recovered using an inverse multidimensional Fourier transform: $\vect{\beta}^{\ast} = \mathcal{F}^{-1}(\vect{y})$. However to reduce acquisition time for various limiting factors (cost, patient experience), only part of the k-space samples are retained, the rest of the k-space lines are masked based on a parameter called \emph{acceleration}. For example, with an acceleration of four,  only $8\%$ of all-kspace are included,  during our experiments we selected a mask with random acceleration of four and eight. Random undersampling is usually chosen to provide a fair comparison with more traditional learned reconstruction algorithms. 
+known as \emph{k-space}. In absence of noise or undersampling, the true image $\vect{\beta}_{\text{true}}$ can be fully recovered using an inverse multidimensional Fourier transform: $\vect{\beta}^{\ast} = \mathcal{F}^{-1}(\vect{y})$. However to reduce acquisition time for various limiting factors (cost, patient experience), only part of the k-space samples are retained, the rest of the k-space lines are masked based on a parameter called \emph{acceleration}. For example, with an acceleration of four,  only $8\%$ of all-kspace are included,  during our experiments we selected a mask with random acceleration of four and eight. Random undersampling is usually chosen to provide a fair comparison with more traditional learned reconstruction algorithms. 
 \begin{table}[!ht]
 	\centering
 	\begin{tabular}{lclclcl} \toprule
@@ -315,10 +315,10 @@ With a suitable $u_0$ we obtain
 	u_{n+1} 		&=  -L^{-1} R(u_n) - L^{-1} A_n \\
 \end{align*}
 
-Thus assuming that we know the linear operator $L$ and  the Adomian polynomials $A_i, i=1,\cdots,n$ can be analytically determined, we can reuse a deep learning architecture similar to \ref{fig:nn_architecture}, the regulizer could be a FFN trained with observed data points $\{x_i, y_i, u_i\}, i=1,\cdots,J$ and a mean square loss function (MSE) $\frac{1}{N} \sum_{i=1}^J (y_i - \hat{u}(\vect{x}_i, \sigma))^2$. Since the input undersampled image may contains noise, the neural network prevents overfitting.
+Thus assuming that we know the linear operator $L$ and  the Adomian polynomials $A_i, i=1,\cdots,n$ can be analytically determined, we can reuse a deep learning architecture similar to \ref{fig:nn_architecture}, the regulizer could be a FFN trained with observed data points $\{\vect{x}_i, \vect{y}_i, \vect{u}_i\}, i=1,\cdots,J$ and a mean square loss function (MSE): $\frac{1}{N} \sum_{i=1}^J (y_i - \hat{u}(\vect{x}_i, \sigma))^2$. 
 
 \section{Conclusion}
-There has been in recent years an active research in solving inverse problems by pairing a data consistency layer with a plug-and-play approach regarding the regulizer term relying on off-the-shelf denoisers. In this work, we systematically evaluated state-of-the-art networks in order to improve the baselines of the single-coil fastMRI challenge. Tackling the multicoil knee reconstruction task presented more difficulties than anticipated to fit in the Neumann unrolled architecture. We also hint to a methodology to tackle non-linear problems, which arise, frequently in MRI and will need to be addressed  to push further the quality of the reconstructed images (diffusion equation). We really enjoyed the paper from Gilton et Al (\cite{DBLP:journals/corr/abs-1901-03707}), by reproducing their results on a difficult reconstruction challenge. In spite of not obtaining spectacular improvements, we have the feeling that researchers have just scratched the surface of combining deep learning with more traditional optimization schemes for MRI reconstruction. 
+There has been in recent years an active research in solving inverse problems by pairing a data consistency layer with a plug-and-play approach regarding the regulizer term relying on off-the-shelf denoisers. In this work, we systematically evaluated state-of-the-art networks in order to improve the baselines of the single-coil fastMRI challenge. Tackling the multicoil knee reconstruction task presented more difficulties than anticipated to fit in the Neumann unrolled architecture. We also hint to a methodology to tackle non-linear problems, which arise, frequently in MRI and will need to be addressed  to push further the quality of the reconstructed images (diffusion equation). We really enjoyed the paper from Gilton et Al (\cite{DBLP:journals/corr/abs-1901-03707}), by reproducing their results on a difficult reconstruction challenge. Up to now we have just scratched the surface of combining deep learning models with more traditional optimization schemes for MRI reconstruction, we are yet to understand their generalization ability to model more intrinsically the MRI physics.
 
 \section{Acknowledgments}
 We would like to thank Sreyas Mohan for his well seasoned advices all along this project.
@@ -326,5 +326,60 @@ We would like to thank Sreyas Mohan for his well seasoned advices all along this
 \nocite{*}
 \bibliographystyle{plainnat}
 \bibliography{references}
+
+\section{Supplements}
+\subsection{Image reconstruction and forward operator}
+The MRI system can be thought of as an operator $\matr{X}$ that acts on an image $\vect{\beta}_{\text{true}}$ to yield a measurement $\vect{y}= \matr{X} \vect{\beta}_{\text{true}}$.
+The goal of image reconstruction is to recover an approximation $\hat{\vect{\beta}}$ from $\vect{y}$.
+In the single-coil MRI acquisition setting, we have $\matr{X}^T \matr{X} = \mathcal{F}^{-1} \matr{M} \mathcal{F}$, where $\mathcal{F}$ is the 2-D discrete Fourier Transform (DFT), $\matr{M}$ the masking function that selects a subset of columns from the input k-space data (columns of the Fourier matrix  $\mathcal{F}$), and $\mathcal{F}^{-1}$ the 2-D inverse discrete Fourier Transform:
+$$
+	\vect{y}	= (\mathcal{F}^{-1} \matr{M} \mathcal{F}) \vect{\beta}_{\text{true}} + \epsilon			
+$$
+ 
+The evaluation of the fastMRI challenge relies on a Root-Sum-of-Squares (RSS) reconstruction of the fully-sampled k-space data:
+$$
+	\vect{y}	= \mathcal{F}^{-1} \text{RSS}_{<i>} (\matr{M}_i \, \mathcal{F} \, \vect{\beta}_{\text{true}}) + \epsilon			
+$$
+It is not linear and could not be easily integrated in the neumann Network architecture.
+ 
+\subsection{Evaluation metrics}
+Metrics used during our experiments
+\begin{itemize}
+	\item Normalized Mean Square Error: $\frac{ \| \vect{\beta} - \hat{\vect{\beta}} \|_2^2 } { \|  \vect{\beta} \|_2^2 }$
+	\item Peak Signal to Noise Ratio: $10 \log_{10} \frac {\max({\vect{\beta}})^2 } {\text{MSE} (\vect{\beta}, \hat{\vect{\beta}})}$
+	\item Structure Similarity:
+\end{itemize}
+
+ 
+\subsection{Side by side comparison U-Net and Neumann reconstructed images}
+\begin{figure}[H] 
+\centering
+   \begin{subfigure}[]{.5\textwidth}
+   \centering
+        \includegraphics[width=.95\linewidth]{Unet_reconstruction}
+	\caption{U-Net  reconstructed images}
+	\vspace*{2mm} 
+    \end{subfigure}%
+   \begin{subfigure}[]{.5\textwidth}
+   \centering
+        \includegraphics[width=.95\linewidth]{neumann_reconstruction}
+	\caption{Neumann reconstructed images}
+	\vspace*{2mm}
+    \end{subfigure}%
+  \hspace{4pt}%
+   \begin{subfigure}[]{.5\textwidth}
+   \centering   
+        \includegraphics[width=.95\linewidth]{Unet_error}
+        \caption{error: target - U-Net reconstruction }
+        \label{fig:reconstructed_images}
+    \end{subfigure}% 
+   \begin{subfigure}[]{.5\textwidth}
+   \centering   
+        \includegraphics[width=.95\linewidth]{neumann_error}
+        \caption{error: target - Neumann reconstruction }
+    \end{subfigure}% 
+\end{figure}
+
+
 \end{document}
 
