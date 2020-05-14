@@ -186,20 +186,20 @@ then
 \subsection{Data Preparation}
 The raw MRI data includes $8344$ volumes, consisting of $167,375$ slices or images of knees or brain examinations. The measurements are in the Fourier-space domain,
 known as \emph{k-space}. In absence of noise or undersampling, the true image $\vect{\beta}_{\text{true}}$ can be fully recovered using an inverse multidimensional Fourier transform: $\vect{\beta}^{\ast} = \mathcal{F}^{-1}(\vect{y})$. However to reduce acquisition time for various limiting factors (cost, patient experience), only part of the k-space samples are retained, the rest of the k-space lines are masked based on a parameter called \emph{acceleration}. For example, with an acceleration of four,  only $8\%$ of all-kspace are included,  during our experiments we selected a mask with random acceleration of four and eight. Random undersampling is usually chosen to provide a fair comparison with more traditional learned reconstruction algorithms. 
-\begin{table}[!ht]
-	\centering
-	\begin{tabular}{lclclcl} \toprule
-			&  {\textbf{Volumes}} &  {\textbf{Slices}} \\
-		\text{Training} & 973 & 34,742\\
-		\midrule
-		\text{Validation}  & 199 & 7,135 \\
-		\midrule
-		\text{Test}  & 108 & 3,903\\
-		 \bottomrule
-	\end{tabular}
-	\caption{Single-coil: volumes and slices in each set}
-	\label{tab:dataset}
-\end{table}
+%\begin{table}[!ht]
+%	\centering
+%	\begin{tabular}{lclclcl} \toprule
+%			&  {\textbf{Volumes}} &  {\textbf{Slices}} \\
+%		\text{Training} & 973 & 34,742\\
+%		\midrule
+%		\text{Validation}  & 199 & 7,135 \\
+%		\midrule
+%		\text{Test}  & 108 & 3,903\\
+%		 \bottomrule
+%	\end{tabular}
+%	\caption{Single-coil: volumes and slices in each set}
+%	\label{tab:dataset}
+%\end{table}
 
 \subsection{Deep learning architecture}
 Two steps are critical when creating a Neumann network
@@ -285,30 +285,8 @@ We would like to thank Sreyas Mohan for his well seasoned advices all along this
 \nocite{*}
 \bibliographystyle{plainnat}
 \bibliography{references}
-
-\section{Appendix}
-\subsection{Image reconstruction and forward operator}
-The MRI system can be thought of as an operator $\matr{X}$ that acts on an image $\vect{\beta}_{\text{true}}$ to yield a measurement $\vect{y}= \matr{X} \vect{\beta}_{\text{true}}$.
-The goal of image reconstruction is to recover an approximation $\hat{\vect{\beta}}$ from $\vect{y}$.
-In the single-coil MRI acquisition setting, we have $\matr{X}^T \matr{X} = \mathcal{F}^{-1} \matr{M} \mathcal{F}$, where $\mathcal{F}$ is the 2-D discrete Fourier Transform (DFT), $\matr{M}$ the masking function that selects a subset of columns from the input k-space data (columns of the Fourier matrix  $\mathcal{F}$), and $\mathcal{F}^{-1}$ the 2-D inverse discrete Fourier Transform:
-$$
-	\vect{y}	= (\mathcal{F}^{-1} \matr{M} \mathcal{F}) \vect{\beta}_{\text{true}} + \epsilon			
-$$
- 
-The evaluation of the fastMRI challenge relies on a Root-Sum-of-Squares (RSS) reconstruction of the fully sampled k-space data:
-$$
-	\vect{y}	= \mathcal{F}^{-1} \text{RSS}_{<i>} (\matr{M}_i \, \mathcal{F} \, \vect{\beta}_{\text{true}}) + \epsilon			
-$$
-It is not linear and could not be easily integrated in the Neumann network architecture.
- 
-\subsection{Evaluation metrics}
-Metrics used during our experiments
-\begin{itemize}
-	\item Normalized Mean Square Error: $\frac{ \| \vect{\beta} - \hat{\vect{\beta}} \|_2^2 } { \|  \vect{\beta} \|_2^2 }$
-	\item Peak Signal to Noise Ratio: $10 \log_{10} \frac {\max({\vect{\beta}})^2 } {\MSE (\vect{\beta}, \hat{\vect{\beta}})}$
-	\item Structure Similarity: $\frac{ ( 2 \, \E(\vect{\beta})  \E( \hat{\vect{\beta}}) + c_1) (2 \Cov(\vect{\beta},  \hat{\vect{\beta}}) + c_2) } { (\E(\vect{\beta})^2 +  \E( \hat{\vect{\beta}})^2 + c_1) \, (\Var(\vect{\beta}) +  \Var( \hat{\vect{\beta}}) + c_2) }$
-\end{itemize}
 \newpage
+\section{Appendix}
 \subsection{Experiment results}
 \begin{figure}[H] 
 \centering
@@ -337,44 +315,5 @@ Metrics used during our experiments
         \caption{error: target - reconstruction }
     \end{subfigure}% 
 \end{figure}
-\newpage
-%\subsection{Side by side comparison U-Net and Neumann reconstructed images}
-	\begin{figure}[H]
-		\centering
-		\captionsetup{justification=centering}
-		\includegraphics[width=\textwidth]{unet_neumann}
-		\caption{On the left PSNR for U-Net and Neumann and on the right SSIM and Validation loss for Neumann and U-Net.}
-	\end{figure}
-
-
-\begin{figure}[H] 
-\centering
-   \begin{subfigure}[]{.5\textwidth}
-   \centering
-        \includegraphics[width=.95\linewidth]{Unet_reconstruction}
-	\caption{U-Net  reconstructed images}
-	\vspace*{2mm} 
-    \end{subfigure}%
-   \begin{subfigure}[]{.5\textwidth}
-   \centering
-        \includegraphics[width=.95\linewidth]{neumann_reconstruction}
-	\caption{Neumann reconstructed images}
-	\vspace*{2mm}
-    \end{subfigure}%
-  \hspace{4pt}%
-   \begin{subfigure}[]{.5\textwidth}
-   \centering   
-        \includegraphics[width=.95\linewidth]{Unet_error}
-        \caption{error: target - U-Net reconstruction }
-        \label{fig:reconstructed_images}
-    \end{subfigure}% 
-   \begin{subfigure}[]{.5\textwidth}
-   \centering   
-        \includegraphics[width=.95\linewidth]{neumann_error}
-        \caption{error: target - Neumann reconstruction }
-    \end{subfigure}% 
-\end{figure}
-
-
 \end{document}
 
