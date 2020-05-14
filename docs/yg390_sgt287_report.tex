@@ -1,0 +1,380 @@
+\documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2019
+
+% ready for submission
+% \usepackage{neurips_2019}
+
+% to compile a preprint version, e.g., for submission to arXiv, add add the
+% [preprint] option:
+%     \usepackage[preprint]{neurips_2019}
+\PassOptionsToPackage{numbers}{natbib}
+% to compile a camera-ready version, add the [final] option, e.g.:
+\usepackage[final]{neurips_2020}
+
+% to avoid loading the natbib package, add option nonatbib:
+%     \usepackage[nonatbib]{neurips_2019}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+
+\usepackage{amsmath,amssymb,bm}
+\usepackage{caption}
+\captionsetup[figure]{labelfont=small, justification=centering}
+\usepackage{subcaption}
+\usepackage{mathtools}
+\usepackage{lmodern}
+\usepackage{siunitx}
+\usepackage{booktabs}
+\usepackage{etoolbox}
+
+\usepackage[dvipsnames]{xcolor}
+\usepackage[hang,flushmargin]{footmisc}
+\usepackage{bbm}
+\usepackage{pgfplots}
+\usetikzlibrary{spy}
+\usepgfplotslibrary{external}
+\usepgfplotslibrary{fillbetween}
+\usetikzlibrary{arrows,automata}
+\usepackage{thmtools}
+\usepackage{blkarray} 
+\usepackage{textcomp}
+
+\usepackage{times}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{latexsym}
+\usepackage{color}
+\usepackage{graphics}
+\usepackage{enumerate}
+\usepackage{amstext}
+\usepackage{blkarray}
+\usepackage{url}
+\usepackage{epsfig}
+\usepackage{bm}
+\usepackage{textcomp}
+\usepackage{mathtools}
+\usepackage{minted}
+
+
+\title{Learning to regularize, Application of Neumann Network to the fastMRI dataset}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+\author{%
+  Yves Greatti \\
+  New York University\\
+  % examples of more authors
+   \And
+    Soham Girish Tamba \\
+    New York University\\
+}
+
+\input{macros}
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+ Recent progress in Machine Learning and Data science has seen the development of efficient Neural Networks architecture to solve inverse-problems. Neural networks have surpassed more traditional approaches in 
+  many natural sciences, medicine and life sciences, challenging applications.
+ Our goal in this work has been first to perform a quick survey of data-driven inverse problem methodologies, followed by an understanding of the key ideas at the core of a Neumann Network and its implementation
+ and application to the task of image reconstruction using the fastMRI dataset, a very-large collection of  undersampled Magnetic Resonance Imaging (MRI) measurements. 
+  \end{abstract}
+  
+ \section{Introduction}
+\label{Introduction}
+
+In term of operator, an inverse problem is formalized as solving an operator equation
+\begin{equation}
+	\matr{Y} = \mathcal{A} (\beta_{\text{true}}) + \epsilon \label{eq:1}
+\end{equation}
+where $\mathcal{A}$ is a forward operator from the model parameter space $\matr{X}$ to the data space $\matr{Y}$,  $\beta_{\text{true}}$ the ground truth image and $\epsilon$ a random variable modeling the observation noise.
+ The MRI (Magnetic Resonance Imaging) image reconstruction problem is an inverse problem, the forward operator is a discrete sampling operator concatenated with the Fourier transform.
+ To eliminate image artifacts due to patient movements, and for other reasons, an MRI machine acquires less data to reduce scanning time.
+For the fastMRI image reconstruction challenge, the undersampling consists  in masking k-space lines from a fully-sampled acquisition.
+A difficulty in solving  \eqref{eq:1}, is that the solution is sensitive to variations in the data, which is referred to ill-posedness. The notion of  ill-posedness is attributed to Hadamard, who defined that, by contrast, a well-posed problem
+has three distinct properties: (i) it has a solution, that is (ii) unique, and that (ii) depends continuously on the data. Another way of describing  ill-posedness is to understand the operator  $\mathcal{A}$ and when it is linear , look at its singular
+value decomposition. The decay of the spectral spectrum $\sigma_k, k \in \mathcal{N}$ of  $\mathcal{A}$ is strongly related to the ill-posedness: faster decay implies a more ill-posed problem. 
+ 	
+\begin{figure}[H]
+		\centering
+		\captionsetup{justification=centering}
+		\includegraphics[width=200pt]{variance_plot_log.pdf}
+		\caption{$50$ first singular value of the k-space of an image from the fastMRI dataset after undersampling.}
+\end{figure}
+The problem defined in \eqref{eq:1}, can be formulated as an ordinary least squares problem (OLS) , given a set of training images $\{\vect{y_1}, \vect{y_2}, \ldots, \vect{y_n}\}$, and a linear operator $\mathcal{A}$ simulating the MRI measurement process, we want to compute the estimates 
+$\vect{\beta}$ which satisfy:
+$$
+\hat{\vect{\beta}}  =  \argmin_{\beta} \| \vect{y} -\mathcal{A} \vect{\beta} \|_2^2
+$$
+The aim of regularization theory is to provide a regularizer $r(\cdot)$ which pushes the estimate $\vect{\beta}$ to $\vect{\beta}_{\text{true}}$. We now set the inverse problem as:
+$$
+\hat{\vect{\beta}}  =  \argmin_{\beta} \frac{1}{2} \| \vect{y} -\mathcal{A} \vect{\beta} \|_2^2 + r(\vect{\beta})
+$$
+The regularization operator $r(\cdot)$, is a denoising encoder and one approach to solve this inverse problem, is to learn $r(\cdot)$. 
+ 
+\section{Theory}
+\label{Theory}
+
+The core idea of a Neumann network, is to use a denoising autoencoder as a proximal operator in an iterative scheme.
+The estimated reconstructed image is given by:
+\begin{equation}
+\op{prox}_{r}\brac{\vect{\beta}} := \arg \min_{\vect{\beta}} r\brac{\vect{\beta}}+ \frac{1}{2} \normTwo{\vect{y}-\matr{X}\vect{\beta}}^2  \label{eq:2}
+\end{equation}
+Assuming that $r\brac{\vect{\beta}} = \frac{1}{2} \vect{\beta}^T \vect{R} \vect{\beta}$ then taking the gradient of the \eqref{eq:2}, leads to the optimal solution $\vect{\beta}^{\ast}$
+\begin{align*}
+	(\matr{X}^T \matr{X} + \matr{R}) \matr{\beta}^* &=	\matr{X}^T \vect{y} \\
+	\matr{\beta}^* 			&= (\matr{X}^T \matr{X} + \matr{R})^{-1} \matr{X}^T \vect{y} \\
+\end{align*}
+Using a well-established  result,  for any matrix, $ p \times p \, \matr{A}$, the Neumann series, $\sum_{k=0}^\infty \matr{A}^k$, converges to the inverse of $\matr{I} - \matr{A}$,
+assuming $\|\matr{A}\|_{l_i} < 1$ where $l_i$ is an operator norm. We are now in position to replace the inversion defined in  \eqref{eq:2}, by a finite sum of power of $\matr{A}$:
+\begin{align*}
+	(\matr{I} - \matr{A})^{-1}	&= \sum_{k=0}^{\infty} \matr{A}^k = \matr{I} + \matr{A} + \matr{A}^2 + \matr{A}^3 + \cdots \\ 
+	\matr{B}^{-1}			&= \eta  \sum_{k=0}^{\infty}  (\matr{I} - \eta \matr{B})^k \text{~ ancillary result} \\	
+	\matr{\beta}^{\ast}		&=  \sum_{j=0}^{\infty} (\matr{I} - \eta \matr{X}^T \matr{X} -\eta \matr{R})^j (\eta \matr{X}^T \vect{y}) \\
+	\hat{\matr{\beta}}(\vect{y})  &:=  \sum_{j=0}^{B} \bigg([ \matr{I} - \eta \matr{X}^T \matr{X} ](\cdot) -\eta \matr{R}(\cdot) \bigg)^j (\eta \matr{X}^T \vect{y}) \\	
+\end{align*}
+The last equation has a natural recursive form, which is easily interpretable as a deep learning architecture:
+\begin{align*}
+	\tilde{\vect{\beta}}^{(j)} 		&:=	\bigg( \matr{I} - \eta \matr{X}^T \matr{X} \bigg) \tilde{\vect{\beta}}^{(j-1)} - \eta R(\tilde{\vect{\beta}}^{(j-1)}), j=1, \cdots , B \\
+	\tilde{\vect{\beta}}(\vect{y})	&:=   \sum_{j=0}^{B} \tilde{\vect{\beta}}^{(j)} \\
+\end{align*}
+\begin{figure}[H]
+		\centering
+		\captionsetup{justification=centering}
+		\includegraphics[width=400pt]{nn_architecture}
+		\caption{Neumann Network Architecture}
+		\label{fig:nn_architecture}
+\end{figure}
+One interesting lemma established by Gilton et Al (\cite{DBLP:journals/corr/abs-1901-03707}), is that the finite sum $\sum_{j=0}^{B} \tilde{\vect{\beta}}^{(j)}$ provides indeed an estimate for the reconstructed image $\tilde{\vect{\beta}}(\vect{y})$  approximatively equal to the optimal reconstruction  $\vect{\beta}^{\ast}$, almost \emph{independently} of the number of iterations, which is a result we recovered through our experiments.
+
+Assuming that the autoencoder is linear with the input 
+$$
+	\vect{R}(\matr{\beta}) = \vect{R} \matr{\beta} = -c_{\eta,B} ( \matr{I} - \matr{X}^T \matr{X}) 
+	\matr{U} (\matr{U}^T   \matr{X}^T \matr{X}  \matr{U})^{-1} \matr{U}^T   \matr{X}^T \matr{X} 
+$$ where $\tilde{\vect{\beta}}^{(0)} = \eta \matr{X}^T \vect{y}, \vect{y} = \matr{X} \vect{\beta}^{\ast}$
+
+then
+\begin{align*}
+	\tilde{\vect{\beta}}^{(j)}			&=  a_j \matr{X}^T \matr{X} \vect{\beta}^* + b_j (\matr{I} - \matr{X}^T \matr{X} ) \vect{\beta}^{\ast} \\
+		&\text{ where } \sum_j a_j \approx 1 \text{ and }  \sum_j b_j \approx 1  \\
+	\hat{\vect{\beta}}(\vect{y})	&= \sum_{j=0}^B \tilde{\vect{\beta}}^{(j)} \\
+						&\approx \matr{X}^T \matr{X}  \vect{\beta}^* + (\matr{I} - \matr{X}^T \matr{X} ) \vect{\beta}^* =   \vect{\beta}^{\ast} \\
+\end{align*}
+
+\section{MRI Experiments}
+\label{MRIExperiments}
+
+\subsection{Data Preparation}
+The raw MRI data includes $8344$ volumes, consisting of $167,375$ slices or images of knees or brain examinations. The measurements are in the Fourier-space domain,
+known as \emph{k-space}. In absence of noise or undersampling, the true image $\vect{\beta}_{\text{true}}$ can be fully recovered using an inverse multidimensional Fourier transform: $\vect{\beta}^{\ast} = \mathcal{F}^{-1}(\vect{y})$. However to reduce acquisition time for various limiting factors (cost, patient experience), only part of the k-space samples are retained, the rest of the k-space lines are masked based on a parameter called \emph{acceleration}. For example, with an acceleration of four,  only $8\%$ of all-kspace are included,  during our experiments we selected a mask with random acceleration of four and eight. Random undersampling is usually chosen to provide a fair comparison with more traditional learned reconstruction algorithms. 
+\begin{table}[!ht]
+	\centering
+	\begin{tabular}{lclclcl} \toprule
+			&  {\textbf{Volumes}} &  {\textbf{Slices}} \\
+		\text{Training} & 973 & 34,742\\
+		\midrule
+		\text{Validation}  & 199 & 7,135 \\
+		\midrule
+		\text{Test}  & 108 & 3,903\\
+		 \bottomrule
+	\end{tabular}
+	\caption{Single-coil: volumes and slices in each set}
+	\label{tab:dataset}
+\end{table}
+
+\subsection{Deep learning architecture}
+Two steps are critical when creating a Neumann network
+\begin{itemize}
+\item defining the forward operator $\matr{X}$ and the gramian operator $\matr{X}^T \matr{X}$
+\item selecting an autoencoder $\matr{R}$ as regulizer
+\end{itemize}
+
+We implemented and tested various deep learning models for $\matr{R}$ and finally settled on the U-Net architecture  of the fastMRI challenge itself. If Neumann network has to improve any neural network regulizer, it should also make a difference on the baselines produced by this model. The U-Net single-coil baseline model consists of four deep convolutional networks, a down-sampling path followed by an up-sampling path. The objective function used during training was
+$$
+	\argmin_\theta \frac{1}{2} \sum_{j=1}^N \| \tilde{\vect{\beta}}(\vect{y}) - \vect{\beta}_{\text{true}} \|_1, N=\text{ number of samples }
+$$
+     We ran various experiments with different number of iterations blocks $B$, network hyperpameter $\theta$ and training sizes.
+     We used RMSProp with a learning rate of $0.001$, which was multiplied by $0.1$ after $40$ epochs when the model was initially trained for $50$ epochs but we realized that the network was quickly reaching its best performance metrics after few epochs. At the end of each epoch, we set up a validation step where we recorded the NMSE, SSIM, PSNR and the validation loss.
+   
+\begin{figure}[H] 
+\centering
+   \begin{subfigure}[b]{.5\textwidth}
+   \centering
+   		\includegraphics[width=\textwidth]{block_metrics}
+		\caption{SSIM and PSNR results with different number Neumann Network Blocks}
+    \end{subfigure}%
+   \begin{subfigure}[b]{.5\textwidth}
+   \centering   
+      		\includegraphics[width=\textwidth]{ssim_psnr_image_count}
+		\caption{SSIM and PSNR results with different training datasets}
+    \end{subfigure}% 
+\end{figure}
+Compared to the plain U-Net, the performances of Neumann network are similar. We can detect some improvements when looking more closely at the reconstructed images  \ref{fig:reconstructed_images}.
+
+\section{Ill-posedness and non-linearity in the reconstruction process}
+When the matrix $\matr{X}^T \matr{X} + \matr{R}$ is ill-conditioned, which happens in most cases, the authors, Gilton et Al (\cite{DBLP:journals/corr/abs-1901-03707}),  propose a preconditioning:
+\begin{align*}
+	(\matr{X}^T \matr{X} + \matr{R}) \matr{\beta}^{\ast} &=	\matr{X}^T \vect{y} \\
+	(\matr{X}^T \matr{X} + \lambda \matr{I})  \matr{\beta}^{\ast} + ( \matr{R} -  \lambda \matr{I})   \matr{\beta}^{\ast} &= \matr{X}^T \vect{y} \\
+\end{align*}
+Applying $	\matr{T}_{\lambda} := (\matr{X}^T \matr{X} + \lambda \matr{I})^{-1}$ to both sides and rearranging the terms gives
+\begin{align*}
+	(\matr{I} - \lambda \matr{T}_{\lambda} + \tilde{\matr{R}}) \matr{\beta}^{\ast} &= \matr{T}_{\lambda} \matr{X}^T \vect{y}, 
+	 \tilde{\matr{R}} =  \matr{T}_{\lambda} \matr{R} \\
+\hat{\matr{\beta}}_{\text{pc}}(\vect{y})  &=  \sum_{j=0}^{B}  \bigg( \lambda  \matr{T}_{\lambda}(\cdot) -   \tilde{\matr{R}}(\cdot) \bigg)^j  \matr{T}_{\lambda} \matr{X}^T \vect{y} \\		 
+\end{align*}
+In our experiments with the fastMRI single-coil dataset, a preconditioned Neumann network did not achieve higher quality results.
+
+An attempt to address the non-linearities of the MRI process using an unrolled Gradient Descent scheme would be to use the Adomian decomposition method.
+In this method, the studied equation representing the non-linearities of the physical model is $L(u) + R(u) + N(u)  = q$ where $L$ is a linear operator, $N$ is an analytical nonlinear operator. Solving for $L(u)$ gives: $L(u) = g - R(u) -N(u)$. Assuming $L$ invertible, the expression becomes:
+\begin{equation}
+	L^{-1} L (u) = L^{-1} g - L^{-1} R(u) - L^{-1} N(u) \label{eq:adom1}
+\end{equation}
+leading to the solution of the initial equation as
+\begin{equation}
+	u = \sum_{i=0}^\infty u_i \label{eq:adom2}
+\end{equation}	
+  The non-linear term $N(u)$ can be decomposed by the infinite series of Adomian polynomials
+\begin{equation}
+N(u) =  \sum_{i=0}^\infty A_i  \label{eq:adom3}
+\end{equation}	
+The $A_i$'s are given as:
+\begin{align*}
+	A_0	&=	F(u_0) \\
+	A_1	&=	u_1 \frac{d}{d \, u_0} F(u_0) \\
+	A_2	&=	u_2 \frac{d}{d \, u_0} F(u_0) + \frac{u_1^2}{2!}  \frac{d^2}{d \, u_0^2} F(u_0)  \\
+	\vdots
+\end{align*}
+Substituting back \eqref{eq:adom2} and \eqref{eq:adom3} into \eqref{eq:adom1} yields
+\begin{equation}
+	 \sum_{i=0}^\infty u_i  =  u_0  + L^{-1} R( \sum_{i=0}^\infty u_i) -   L^{-1}    \sum_{i=0}^\infty  A_i \label{eq:adom4}
+\end{equation}	
+With a suitable $u_0$ we obtain
+\begin{align*}
+	u_1 			&=	-L^{-1} R(u_0) - L^{-1} A_0 \\
+	\vdots \\
+	u_{n+1} 		&=  -L^{-1} R(u_n) - L^{-1} A_n \\
+\end{align*}
+Thus assuming that we know the linear operator $L$ and  the Adomian polynomials $A_i, i=1,\cdots,n$ can be analytically determined, we can reuse a deep learning architecture similar to \ref{fig:nn_architecture}, the regulizer could be a FFN trained with observed data points $\{\vect{x}_i, \vect{y}_i, \vect{u}_i\}, i=1,\cdots,J$ and a mean square loss function (MSE): $\frac{1}{N} \sum_{i=1}^J (y_i - \hat{u}(\vect{x}_i, \sigma))^2$. 
+
+\section{Conclusion}
+There has been, in recent years an active research in solving inverse problems, by pairing a data consistency layer with a plug-and-play approach regarding the regulizer term relying on off-the-shelf denoisers. In this work, we systematically evaluated state-of-the-art networks in order to improve the baselines of the single-coil fastMRI challenge. Tackling the multicoil knee reconstruction task presented more difficulties than anticipated to fit in the Neumann unrolled architecture. We also hint to a methodology to address non-linear problems (diffusion equation), which arise, frequently in MRI and will need to be addressed  to push further the quality of the reconstructed images. We really enjoyed the paper from Gilton et Al (\cite{DBLP:journals/corr/abs-1901-03707}), by reproducing their results on a difficult reconstruction challenge. Up to now we have just scratched the surface of combining deep learning models with more traditional optimization schemes for MRI reconstruction, we are yet to understand their generalization ability to model more intrinsically the MRI physics.
+
+\section{Acknowledgments}
+We would like to thank Sreyas Mohan for his well seasoned advices all along this project.
+\newpage
+\nocite{*}
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\section{Appendix}
+\subsection{Image reconstruction and forward operator}
+The MRI system can be thought of as an operator $\matr{X}$ that acts on an image $\vect{\beta}_{\text{true}}$ to yield a measurement $\vect{y}= \matr{X} \vect{\beta}_{\text{true}}$.
+The goal of image reconstruction is to recover an approximation $\hat{\vect{\beta}}$ from $\vect{y}$.
+In the single-coil MRI acquisition setting, we have $\matr{X}^T \matr{X} = \mathcal{F}^{-1} \matr{M} \mathcal{F}$, where $\mathcal{F}$ is the 2-D discrete Fourier Transform (DFT), $\matr{M}$ the masking function that selects a subset of columns from the input k-space data (columns of the Fourier matrix  $\mathcal{F}$), and $\mathcal{F}^{-1}$ the 2-D inverse discrete Fourier Transform:
+$$
+	\vect{y}	= (\mathcal{F}^{-1} \matr{M} \mathcal{F}) \vect{\beta}_{\text{true}} + \epsilon			
+$$
+ 
+The evaluation of the fastMRI challenge relies on a Root-Sum-of-Squares (RSS) reconstruction of the fully sampled k-space data:
+$$
+	\vect{y}	= \mathcal{F}^{-1} \text{RSS}_{<i>} (\matr{M}_i \, \mathcal{F} \, \vect{\beta}_{\text{true}}) + \epsilon			
+$$
+It is not linear and could not be easily integrated in the Neumann network architecture.
+ 
+\subsection{Evaluation metrics}
+Metrics used during our experiments
+\begin{itemize}
+	\item Normalized Mean Square Error: $\frac{ \| \vect{\beta} - \hat{\vect{\beta}} \|_2^2 } { \|  \vect{\beta} \|_2^2 }$
+	\item Peak Signal to Noise Ratio: $10 \log_{10} \frac {\max({\vect{\beta}})^2 } {\MSE (\vect{\beta}, \hat{\vect{\beta}})}$
+	\item Structure Similarity: $\frac{ ( 2 \, \E(\vect{\beta})  \E( \hat{\vect{\beta}}) + c_1) (2 \Cov(\vect{\beta},  \hat{\vect{\beta}}) + c_2) } { (\E(\vect{\beta})^2 +  \E( \hat{\vect{\beta}})^2 + c_1) \, (\Var(\vect{\beta}) +  \Var( \hat{\vect{\beta}}) + c_2) }$
+\end{itemize}
+\newpage
+\subsection{Experiment results}
+\begin{figure}[H] 
+\centering
+   \begin{subfigure}[]{.5\textwidth}
+   \centering
+        \includegraphics[width=.95\linewidth]{target}
+	\caption{Ground truth  - Single-Coil }
+	\vspace*{2mm} 
+    \end{subfigure}%
+   \begin{subfigure}[]{.5\textwidth}
+   \centering
+        \includegraphics[width=.95\linewidth]{undersampled}
+	\caption{Undersampled - random acceleration - [4, 8]-fold }
+	\vspace*{2mm}
+    \end{subfigure}%
+  \hspace{4pt}%
+   \begin{subfigure}[]{.5\textwidth}
+   \centering   
+        \includegraphics[width=.95\linewidth]{neumann_reconstruction}
+        \caption{Neumann reconstruction}
+        \label{fig:reconstructed_images}
+    \end{subfigure}% 
+   \begin{subfigure}[]{.5\textwidth}
+   \centering   
+        \includegraphics[width=.95\linewidth]{neumann_error}
+        \caption{error: target - reconstruction }
+    \end{subfigure}% 
+\end{figure}
+\newpage
+%\subsection{Side by side comparison U-Net and Neumann reconstructed images}
+	\begin{figure}[H]
+		\centering
+		\captionsetup{justification=centering}
+		\includegraphics[width=\textwidth]{unet_neumann}
+		\caption{On the left PSNR for U-Net and Neumann and on the right SSIM and Validation loss for Neumann and U-Net.}
+	\end{figure}
+
+
+\begin{figure}[H] 
+\centering
+   \begin{subfigure}[]{.5\textwidth}
+   \centering
+        \includegraphics[width=.95\linewidth]{Unet_reconstruction}
+	\caption{U-Net  reconstructed images}
+	\vspace*{2mm} 
+    \end{subfigure}%
+   \begin{subfigure}[]{.5\textwidth}
+   \centering
+        \includegraphics[width=.95\linewidth]{neumann_reconstruction}
+	\caption{Neumann reconstructed images}
+	\vspace*{2mm}
+    \end{subfigure}%
+  \hspace{4pt}%
+   \begin{subfigure}[]{.5\textwidth}
+   \centering   
+        \includegraphics[width=.95\linewidth]{Unet_error}
+        \caption{error: target - U-Net reconstruction }
+        \label{fig:reconstructed_images}
+    \end{subfigure}% 
+   \begin{subfigure}[]{.5\textwidth}
+   \centering   
+        \includegraphics[width=.95\linewidth]{neumann_error}
+        \caption{error: target - Neumann reconstruction }
+    \end{subfigure}% 
+\end{figure}
+
+
+\end{document}
+
