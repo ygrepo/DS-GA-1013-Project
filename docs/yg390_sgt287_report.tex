@@ -39,6 +39,7 @@
 \usepackage{siunitx}
 \usepackage{booktabs}
 \usepackage{etoolbox}
+\usepackage[export]{adjustbox}
 
 \usepackage[dvipsnames]{xcolor}
 \usepackage[hang,flushmargin]{footmisc}
@@ -112,14 +113,36 @@ where $\mathcal{A}$ is a forward operator from the model parameter space $\matr{
 For the fastMRI image reconstruction challenge, the undersampling consists  in masking k-space lines from a fully-sampled acquisition.
 A difficulty in solving  \eqref{eq:1}, is that the solution is sensitive to variations in the data, which is referred to ill-posedness. The notion of  ill-posedness is attributed to Hadamard, who defined that, by contrast, a well-posed problem
 has three distinct properties: (i) it has a solution, that is (ii) unique, and that (ii) depends continuously on the data. Another way of describing  ill-posedness is to understand the operator  $\mathcal{A}$ and when it is linear , look at its singular
-value decomposition. The decay of the spectral spectrum $\sigma_k, k \in \mathcal{N}$ of  $\mathcal{A}$ is strongly related to the ill-posedness: faster decay implies a more ill-posed problem. 
+value decomposition. The decay of the spectral spectrum $\sigma_k, k \in \mathcal{N}$ of  $\mathcal{A}$ is strongly related to the ill-posedness: faster decay implies a more ill-posed problem  \ref{fig:svd}. 
  	
-\begin{figure}[H]
-		\centering
-		\captionsetup{justification=centering}
-		\includegraphics[width=200pt]{variance_plot_log.pdf}
-		\caption{$50$ first singular value of the k-space of an image from the fastMRI dataset after undersampling.}
+%\begin{figure}[H]
+%		\centering
+%		\begin{adjustbox}{minipage=\linewidth,scale=0.75}
+%		\captionsetup{justification=centering}
+%		\includegraphics[width=200pt]{variance_plot_log.pdf}
+%		\caption{$50$ first singular value of the k-space of an image \\ from the fastMRI dataset after undersampling.}
+%	 \end{adjustbox}
+%\end{figure}
+
+\begin{figure}[h]
+\centering
+   \begin{adjustbox}{minipage=\linewidth,scale=0.75}
+   \begin{subfigure}[]{.5\textwidth}
+   \centering
+		\includegraphics[width=\textwidth]{variance_plot_log.pdf}
+		\caption{$50$ first singular value of the k-space of an image \\ from the fastMRI dataset after undersampling.}
+		\label{fig:svd}
+    \end{subfigure}%
+   \begin{subfigure}[]{.5\textwidth}
+   \centering   
+      		\includegraphics[width=\textwidth]{nn_architecture}
+		\caption{Neumann Network Architecture}
+		\label{fig:nn_architecture}
+    \end{subfigure}% 
+    \end{adjustbox}
 \end{figure}
+
+
 The problem defined in \eqref{eq:1}, can be formulated as an ordinary least squares problem (OLS) , given a set of training images $\{\vect{y_1}, \vect{y_2}, \ldots, \vect{y_n}\}$, and a linear operator $\mathcal{A}$ simulating the MRI measurement process, we want to compute the estimates 
 $\vect{\beta}$ which satisfy:
 $$
@@ -152,18 +175,18 @@ assuming $\|\matr{A}\|_{l_i} < 1$ where $l_i$ is an operator norm. We are now in
 	\matr{\beta}^{\ast}		&=  \sum_{j=0}^{\infty} (\matr{I} - \eta \matr{X}^T \matr{X} -\eta \matr{R})^j (\eta \matr{X}^T \vect{y}) \\
 	\hat{\matr{\beta}}(\vect{y})  &:=  \sum_{j=0}^{B} \bigg([ \matr{I} - \eta \matr{X}^T \matr{X} ](\cdot) -\eta \matr{R}(\cdot) \bigg)^j (\eta \matr{X}^T \vect{y}) \\	
 \end{align*}
-The last equation has a natural recursive form, which is easily interpretable as a deep learning architecture:
+The last equation has a natural recursive form, which is easily interpretable as a deep learning architecture  \ref{fig:nn_architecture}:
 \begin{align*}
 	\tilde{\vect{\beta}}^{(j)} 		&:=	\bigg( \matr{I} - \eta \matr{X}^T \matr{X} \bigg) \tilde{\vect{\beta}}^{(j-1)} - \eta R(\tilde{\vect{\beta}}^{(j-1)}), j=1, \cdots , B \\
 	\tilde{\vect{\beta}}(\vect{y})	&:=   \sum_{j=0}^{B} \tilde{\vect{\beta}}^{(j)} \\
 \end{align*}
-\begin{figure}[H]
-		\centering
-		\captionsetup{justification=centering}
-		\includegraphics[width=400pt]{nn_architecture}
-		\caption{Neumann Network Architecture}
-		\label{fig:nn_architecture}
-\end{figure}
+%\begin{figure}[H]
+%		\centering
+%		\captionsetup{justification=centering}
+%		\includegraphics[width=400pt]{nn_architecture}
+%		\caption{Neumann Network Architecture}
+%		\label{fig:nn_architecture}
+%\end{figure}
 One interesting lemma established by Gilton et Al (\cite{DBLP:journals/corr/abs-1901-03707}), is that the finite sum $\sum_{j=0}^{B} \tilde{\vect{\beta}}^{(j)}$ provides indeed an estimate for the reconstructed image $\tilde{\vect{\beta}}(\vect{y})$  approximatively equal to the optimal reconstruction  $\vect{\beta}^{\ast}$, almost \emph{independently} of the number of iterations, which is a result we recovered through our experiments.
 
 Assuming that the autoencoder is linear with the input 
@@ -213,22 +236,55 @@ $$
 	\argmin_\theta \frac{1}{2} \sum_{j=1}^N \| \tilde{\vect{\beta}}(\vect{y}) - \vect{\beta}_{\text{true}} \|_1, N=\text{ number of samples }
 $$
      We ran various experiments with different number of iterations blocks $B$, network hyperpameter $\theta$ and training sizes.
-     We used RMSProp with a learning rate of $0.001$, which was multiplied by $0.1$ after $40$ epochs when the model was initially trained for $50$ epochs but we realized that the network was quickly reaching its best performance metrics after few epochs. At the end of each epoch, we set up a validation step where we recorded the NMSE, SSIM, PSNR and the validation loss.
+     We used RMSProp with a learning rate of $0.001$, which was multiplied by $0.1$ after $40$ epochs when the model was initially trained for $50$ epochs but we realized that the network was quickly reaching its best performance metrics after few epochs. At the end of each epoch, we set up a validation step where we recorded the NMSE, SSIM, PSNR and the validation loss  \ref{fig:metrics}.
    
 \begin{figure}[H] 
 \centering
+   \begin{adjustbox}{minipage=\linewidth,scale=0.6}
    \begin{subfigure}[b]{.5\textwidth}
    \centering
    		\includegraphics[width=\textwidth]{block_metrics}
 		\caption{SSIM and PSNR results with different number Neumann Network Blocks}
+	    	\label{fig:metrics}
     \end{subfigure}%
    \begin{subfigure}[b]{.5\textwidth}
    \centering   
       		\includegraphics[width=\textwidth]{ssim_psnr_image_count}
 		\caption{SSIM and PSNR results with different training datasets}
     \end{subfigure}% 
+    \end{adjustbox}
+    %\caption{}
 \end{figure}
 Compared to the plain U-Net, the performances of Neumann network are similar. We can detect some improvements when looking more closely at the reconstructed images  \ref{fig:reconstructed_images}.
+\begin{figure}[H] 
+\centering
+    \begin{adjustbox}{minipage=\linewidth,scale=0.5}
+   \begin{subfigure}[]{.5\textwidth}
+   \centering
+        \includegraphics[width=.95\linewidth]{target}
+	\caption{Ground truth  - Single-Coil }
+	\vspace*{2mm} 
+    \end{subfigure}%
+   \begin{subfigure}[]{.5\textwidth}
+   \centering
+        \includegraphics[width=.95\linewidth]{undersampled}
+	\caption{Undersampled - random acceleration - [4, 8]-fold }
+	\vspace*{2mm}
+    \end{subfigure}%
+  \hspace{4pt}%
+   \begin{subfigure}[]{.5\textwidth}
+   \centering   
+        \includegraphics[width=.95\linewidth]{neumann_reconstruction}
+        \caption{Neumann reconstruction}
+        \label{fig:reconstructed_images}
+    \end{subfigure}% 
+   \begin{subfigure}[]{.5\textwidth}
+   \centering   
+        \includegraphics[width=.95\linewidth]{neumann_error}
+        \caption{error: target - reconstruction }
+    \end{subfigure}% 
+        \end{adjustbox}
+\end{figure}
 
 \section{Ill-posedness and non-linearity in the reconstruction process}
 When the matrix $\matr{X}^T \matr{X} + \matr{R}$ is ill-conditioned, which happens in most cases, the authors, Gilton et Al (\cite{DBLP:journals/corr/abs-1901-03707}),  propose a preconditioning:
@@ -285,35 +341,5 @@ We would like to thank Sreyas Mohan for his well seasoned advices all along this
 \nocite{*}
 \bibliographystyle{plainnat}
 \bibliography{references}
-\newpage
-\section{Appendix}
-\subsection{Experiment results}
-\begin{figure}[H] 
-\centering
-   \begin{subfigure}[]{.5\textwidth}
-   \centering
-        \includegraphics[width=.95\linewidth]{target}
-	\caption{Ground truth  - Single-Coil }
-	\vspace*{2mm} 
-    \end{subfigure}%
-   \begin{subfigure}[]{.5\textwidth}
-   \centering
-        \includegraphics[width=.95\linewidth]{undersampled}
-	\caption{Undersampled - random acceleration - [4, 8]-fold }
-	\vspace*{2mm}
-    \end{subfigure}%
-  \hspace{4pt}%
-   \begin{subfigure}[]{.5\textwidth}
-   \centering   
-        \includegraphics[width=.95\linewidth]{neumann_reconstruction}
-        \caption{Neumann reconstruction}
-        \label{fig:reconstructed_images}
-    \end{subfigure}% 
-   \begin{subfigure}[]{.5\textwidth}
-   \centering   
-        \includegraphics[width=.95\linewidth]{neumann_error}
-        \caption{error: target - reconstruction }
-    \end{subfigure}% 
-\end{figure}
 \end{document}
 
