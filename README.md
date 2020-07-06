@@ -1,1 +1,3 @@
-# DS-GA-1013-Project
+# Learning to regularize
+
+Recent progress in Machine Learning and Data science has seen the development of efficient Neural Networks architecture to solve inverse-problems. Neural networkshave surpassed more traditional approaches in many natural sciences, medicine and life sciences, challenging applications. Our goal in this work has been first to perform a quick survey of data-driven inverse problem methodologies, followed by an understanding of the key ideas at the core of a Neumann Network and its implementation and application to the task of image reconstruction using the fast MRI dataset, a ver large collection of undersampled Magnetic Resonance Imaging (MRI) measurements.
